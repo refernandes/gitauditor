@@ -1,4 +1,4 @@
-# GitAuditor 🛡️🤖
+# GitAuditor 🤖
 
 GitAuditor é uma ferramenta de **linha de comando (CLI)** construída em Python (utilizando a biblioteca `Rich`) focada em gerenciar, auditar e organizar repositórios Git na sua máquina local. Ele centraliza a visualização dos seus repositórios, avalia permissões SSH, encontra repositórios duplicados e integra-se nativamente com Inteligência Artificial (**Ollama**) para reescrever o histórico de commits de forma totalmente automatizada.
 
