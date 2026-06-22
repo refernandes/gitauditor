@@ -1,148 +1,150 @@
 # GitAuditor 🤖
 
-**GitAuditor** evoluiu de um simples script local para um **Catálogo Inteligente de Infraestrutura de Código turbinado por Inteligência Artificial**.
-Construído em Python com `Typer`, `SQLModel` e `Rich`, ele transforma pastas de repositórios espalhadas pela sua máquina em um banco de dados local perfeitamente gerenciável, ao mesmo tempo que entende o contexto semântico do seu código usando provedores de IA como OpenAI, OpenRouter ou Ollama local.
+*[Leia esta documentação em Português / Read this in Portuguese](README_pt.md)*
 
-Pare de se perguntar *"Onde foi que eu clonei aquele projeto?"*, *"Sobre o que é este repositório legado?"* ou *"Como escrevo notas de release para estes últimos 30 commits?"*. O GitAuditor mapeia, cataloga, audita e analisa sua infraestrutura automaticamente.
+**GitAuditor** has evolved from a simple local script into an **AI-powered Intelligent Code Infrastructure Catalog**.
+Built in Python with `Typer`, `SQLModel`, and `Rich`, it transforms repository folders scattered across your machine into a perfectly manageable local database, while understanding the semantic context of your code using AI providers like OpenAI, OpenRouter, or a local Ollama instance.
 
----
-
-## 🌟 O que mudou na Versão 3 (O Catálogo Semântico)?
-
-O projeto passou por uma metamorfose impressionante, implementando o **Blueprint P3 (Camada Semântica)** para ser o seu co-piloto de governança:
-
-1. **Banco de Dados Local e Eficiente (`SQLModel` + `SQLite`):** Mantém um catálogo local (`~/.gitauditor/catalog.db`), carregando instantaneamente e deduplicando projetos clonados.
-2. **Gerenciador de Git Worktrees (P2):** Cria `worktrees` seguras em pastas vizinhas compartilhando o mesmo histórico do Git, poupando espaço no disco.
-3. **Painel de Configuração de IA (Multi-Provedor):** Suporte total a **Ollama** (Local/Gratuito), **OpenAI** (Nuvem/Alta Precisão) e **OpenRouter** (Multi-modelos).
-4. **Extração de Contexto Semântico:** Usa hashes para analisar a árvore do projeto e o README sem gastar CPU, gerando resumos (Sumário, Stack Tecnológica, Nível de Atividade) usando LLMs.
-5. **Classificação Automática (Auto-Tagging):** Um sistema de dupla verificação. Primeiro escaneia arquivos chaves (heurística determinística) e depois usa IA para refinar e criar tags de negócio (`api`, `frontend`, `monorepo`, etc).
-6. **Code Review Local:** Um revisor estrito que analisa o seu *diff* atual no repositório antes do commit, focando em code smells, arquitetura e riscos.
-7. **Gerador de Changelogs:** Varre o histórico de commits (com limite personalizável) e usa IA para gerar um *Release Notes* humano e estruturado separando Bugs, Features e Refactors.
+Stop asking yourself *"Where did I clone that project?"*, *"What is this legacy repository about?"* or *"How do I write release notes for these last 30 commits?"*. GitAuditor automatically maps, catalogs, audits, and analyzes your infrastructure.
 
 ---
 
-## 🚀 Instalação e Configuração
+## 🌟 What's new in Version 3 (The Semantic Catalog)?
 
-A instalação do GitAuditor como pacote CLI é nativa:
+The project has undergone an impressive metamorphosis, implementing the **P3 Blueprint (Semantic Layer)** to act as your governance co-pilot:
+
+1. **Efficient Local Database (`SQLModel` + `SQLite`):** Maintains a local catalog (`~/.gitauditor/catalog.db`), loading instantly and deduplicating cloned projects.
+2. **Git Worktree Manager (P2):** Creates secure `worktrees` in neighboring folders sharing the same Git history, saving disk space.
+3. **Multi-Provider AI Configuration Panel:** Full support for **Ollama** (Local/Free), **OpenAI** (Cloud/High Precision), and **OpenRouter** (Multi-model).
+4. **Semantic Context Extraction:** Uses hashes to analyze the project tree and README without wasting CPU, generating summaries (Overview, Tech Stack, Activity Level) using LLMs.
+5. **Automatic Classification (Auto-Tagging):** A dual-verification system. It first scans key files (deterministic heuristics) and then uses AI to refine and create business tags (`api`, `frontend`, `monorepo`, etc).
+6. **Local Code Review:** A strict reviewer that analyzes your current repository *diff* before the commit, focusing on code smells, architecture, and risks.
+7. **Changelog Generator:** Scans the commit history (with a customizable limit) and uses AI to generate structured, human-readable *Release Notes* categorizing Bugs, Features, and Refactors.
+
+---
+
+## 🚀 Installation & Setup
+
+Installing GitAuditor as a CLI package is fully native:
 
 ```bash
 git clone https://github.com/refernandes/gitauditor.git
 cd gitauditor
 
-# Criar e ativar o ambiente virtual (Linux/macOS)
+# Create and activate the virtual environment (Linux/macOS)
 python3 -m venv venv
 source venv/bin/activate
 
-# Instalar a aplicação como um pacote interativo
+# Install the app as an interactive package
 pip install -e .
 ```
 
-A partir de agora, o comando global `gitauditor` estará disponível no seu terminal!
+From now on, the global `gitauditor` command will be available in your terminal!
 
 ---
 
-## 🖥️ A Interface Visual (O Modo Interativo)
+## 🖥️ The Visual Interface (Interactive Mode)
 
-Ao digitar apenas `gitauditor` no terminal, você acessa a interface interativa (UI) construída com `Rich`. Essa interface apresenta uma tabela central com todos os seus repositórios e um menu de ações inferior.
+By typing just `gitauditor` in the terminal, you access the interactive UI built with `Rich`. This interface displays a central table with all your repositories and a bottom action menu.
 
-Na **Versão 3**, foi adicionado o Submenu de Inteligência Artificial para que você possa rodar qualquer ferramenta sem precisar decorar comandos de terminal:
+In **Version 3**, the Artificial Intelligence Submenu was added so you can run any tool without memorizing terminal commands:
 
 ```text
-[bold yellow]Menu Principal:[/bold yellow]
-[1] 🔍 Ver Detalhes de um Repositório
-[2] 📂 Buscar e Abrir no Editor (Open)
-[3] 📊 Dashboard de Saúde do Catálogo
-[4] 🧹 Resolver Repositórios Duplicados
-[5] 🌳 Gerenciar Git Worktrees
-[6] 🤖 Ferramentas de Inteligência Artificial (V3)
-[7] 🔑 Gerenciar Chaves e Identidades SSH
-[8] 🔄 Sincronizar Catálogo Local
-[9] 🏷️ Filtrar Tabela
-[0] 🚪 Sair
+Menu Principal:
+[1] 🔍 View Repository Details
+[2] 📂 Search and Open in Editor
+[3] 📊 Catalog Health Dashboard
+[4] 🧹 Resolve Duplicated Repositories
+[5] 🌳 Manage Git Worktrees
+[6] 🤖 Artificial Intelligence Tools (V3)
+[7] 🔑 Manage SSH Keys and Identities
+[8] 🔄 Sync Local Catalog
+[9] 🏷️ Filter Table
+[0] 🚪 Exit
 ```
 
-Ao escolher a **Opção 6**, você terá acesso a todo o poder Semântico em cima da tabela visual (o sistema te pedirá o ID do repositório antes de rodar a IA):
-- `[1] IA Amend`
-- `[2] IA Code Review`
-- `[3] IA Changelog`
-- `[4] IA Configuração (Mudar Provedor)`
-- `[5] IA Auto-Tagging`
-- `[6] IA Summarize`
+By choosing **Option 6**, you will have access to all the Semantic power over the visual table (the system will ask for the repository ID before running the AI):
+- `[1] AI Amend`
+- `[2] AI Code Review`
+- `[3] AI Changelog`
+- `[4] AI Configuration (Change Provider)`
+- `[5] AI Auto-Tagging`
+- `[6] AI Summarize`
 
 ---
 
-## 🛠️ O Modo Automação (CLI Commands)
+## 🛠️ Automation Mode (CLI Commands)
 
-Se você prefere scripts ou comandos diretos, todas as opções da UI também funcionam via subcomandos CLI.
+If you prefer scripts or direct commands, all UI options also work via CLI subcommands.
 
-### 1. Configurando sua Inteligência Artificial
-Você pode escolher qual motor cognitivo o GitAuditor vai usar (Ollama para rodar 100% offline, OpenAI ou OpenRouter para modelos avançados em nuvem).
+### 1. Configuring your Artificial Intelligence
+You can choose which cognitive engine GitAuditor will use (Ollama to run 100% offline, OpenAI or OpenRouter for advanced cloud models).
 ```bash
 gitauditor config
 ```
 
-### 2. Sincronização e Saúde do Catálogo
-Antes de explorar os superpoderes, popule o banco de dados da sua máquina:
+### 2. Catalog Synchronization and Health
+Before exploring superpowers, populate your machine's database:
 ```bash
-# Mapeia sua máquina
+# Map your machine
 gitauditor catalog sync
 
-# Ver a saúde geral (Órfãos, Duplicados, Total)
+# View overall health (Orphans, Duplicates, Total)
 gitauditor catalog health
 
-# Exibir um plano de normalização de repositórios duplicados
+# Display a normalization plan for duplicated repositories
 gitauditor catalog dedupe --plan
 ```
 
-### 3. A Camada Semântica de IA (V3)
-Os novos comandos poderosos acionam a inteligência para interagir com o seu código:
+### 3. The Semantic AI Layer (V3)
+Powerful new commands trigger intelligence to interact with your code:
 
 ```bash
-# Resume o repositório, identifica a tech stack e analisa riscos/atividade baseando-se na árvore e manifestos
+# Summarize the repository, identify the tech stack, and analyze risks/activity based on the tree and manifests
 gitauditor catalog summarize
 
-# Auto-classifica o repositório atual combinando heurísticas locais de arquivos com análise de IA
+# Auto-classify the current repository combining local file heuristics with AI analysis
 gitauditor catalog tag-auto
 
-# Realiza um "Local Code Review" no diff atual não commitado (code smells e arquitetura)
+# Perform a "Local Code Review" on the current uncommitted diff (code smells and architecture)
 gitauditor review
 
-# Gera um Changelog profissional dos commits passados (Padrão: Todos, ou limite)
+# Generate a professional Changelog from past commits (Default: All, or use limit)
 gitauditor changelog --limit 15
 ```
 
-### 4. IA Amend (A Mágica da Reescrita de Histórico)
-Reescreve o seu histórico local de commits valendo-se do seu diff para gerar novas mensagens no padrão *Conventional Commits*:
+### 4. AI Amend (The Magic of History Rewriting)
+Rewrites your local commit history using your diff to generate new messages following the *Conventional Commits* standard:
 ```bash
 gitauditor amend
 ```
 
-### 5. Git Worktrees (Poupando Disco)
-Pare de fazer 5 clones do mesmo projeto só para testar branches.
+### 5. Git Worktrees (Saving Disk Space)
+Stop cloning the same project 5 times just to test branches.
 ```bash
-# Lista todas as worktrees ativas
+# List all active worktrees
 gitauditor worktree list gitauditor
 
-# Cria uma nova pasta isolada (compartilhando o mesmo .git) para uma nova branch
-gitauditor worktree create gitauditor feature/nova-tela
+# Create a new isolated folder (sharing the same .git) for a new branch
+gitauditor worktree create gitauditor feature/new-screen
 ```
 
-### 6. Busca Rápida (Quick Open)
+### 6. Quick Search (Quick Open)
 ```bash
-# Faz um fuzzy-search no catálogo e abre o projeto no VS Code (ou editor padrão)
+# Do a fuzzy-search in the catalog and open the project in VS Code (or default editor)
 gitauditor catalog open api-gateway
 ```
 
 ---
 
-## 🧱 Arquitetura Moderna (V3)
+## 🧱 Modern Architecture (V3)
 
-A ferramenta é baseada nos pilares mais modernos do ecossistema Python:
+The tool is based on the most modern pillars of the Python ecosystem:
 
-- `Typer`: Criação declarativa da CLI.
-- `SQLModel`: ORM misturado com Pydantic para o `catalog.db`.
-- `Rich`: Renderização espetacular de tabelas, painéis e marcações Markdown no terminal.
-- `Pydantic` + `httpx`: Camada de chamadas LLM (`AIClient`) que consolida requests JSON Estruturadas (Structured Outputs) unificando Ollama, OpenAI e OpenRouter nativamente.
+- `Typer`: Declarative CLI creation.
+- `SQLModel`: ORM mixed with Pydantic for the `catalog.db`.
+- `Rich`: Spectacular rendering of tables, panels, and Markdown markup in the terminal.
+- `Pydantic` + `httpx`: LLM call layer (`AIClient`) that consolidates Structured JSON Requests (Structured Outputs) natively unifying Ollama, OpenAI, and OpenRouter.
 
 ---
-*GitAuditor - Automatize sua governança de código com inteligência, semântica e performance.*
+*GitAuditor - Automate your code governance with intelligence, semantics, and performance.*
