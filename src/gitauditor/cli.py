@@ -45,16 +45,20 @@ class GitAuditorCLI:
 
             console.print("\n[bold yellow]Menu Principal:[/bold yellow]")
             console.print("[1] 🔍 Ver Detalhes de um Repositório")
-            console.print("[2] 🤖 IA Amend (Reescrever histórico guiado por IA)")
-            console.print("[3] 🔑 Gerenciar Chaves e Identidades SSH")
-            console.print("[4] 🧹 Auditoria de Repositórios (Duplicados e Branches)")
+            console.print("[2] 📂 Buscar e Abrir no Editor (Open)")
+            console.print("[3] 📊 Dashboard de Saúde do Catálogo")
+            console.print("[4] 🧹 Resolver Repositórios Duplicados")
+            console.print("[5] 🌳 Gerenciar Git Worktrees")
+            console.print("[6] 🤖 IA Amend (Reescrever histórico guiado por IA)")
+            console.print("[7] 🔑 Gerenciar Chaves e Identidades SSH")
+            console.print("[8] 🔄 Sincronizar Catálogo Local")
             console.print(
-                f"[6] 🏷️  Filtrar Tabela (Atual: [bold green]{self.current_filter}[/bold green])"
+                f"[9] 🏷️  Filtrar Tabela (Atual: [bold green]{self.current_filter}[/bold green])"
             )
             console.print("[0] 🚪 Sair")
 
             choice = Prompt.ask(
-                "Escolha uma opção", choices=["0", "1", "2", "3", "4", "5", "6"]
+                "Escolha uma opção", choices=[str(i) for i in range(10)]
             )
 
             if choice == "0":
@@ -63,17 +67,49 @@ class GitAuditorCLI:
             elif choice == "1":
                 handle_repo_details(self)
             elif choice == "2":
-                handle_ai_amend(self)
+                from gitauditor.commands.catalog_cmd import open_repo
+
+                q = Prompt.ask("Digite o nome ou parte da URL do projeto")
+                open_repo(q)
+                Prompt.ask("\n[dim]Pressione ENTER para continuar[/dim]")
             elif choice == "3":
-                handle_manage_ssh(self)
+                from gitauditor.commands.catalog_cmd import health_dashboard
+
+                health_dashboard()
+                Prompt.ask("\n[dim]Pressione ENTER para continuar[/dim]")
             elif choice == "4":
-                handle_audit_duplicates(self)
+                from rich.prompt import Confirm
+                from gitauditor.commands.catalog_cmd import dedupe_repos
+
+                plan = Confirm.ask("Rodar em modo seguro (Dry-Run)?", default=True)
+                dedupe_repos(plan=plan)
+                Prompt.ask("\n[dim]Pressione ENTER para continuar[/dim]")
             elif choice == "5":
+                console.print("\n[1] Listar Worktrees")
+                console.print("[2] Criar Nova Worktree")
+                wc = Prompt.ask("Opção", choices=["1", "2"])
+                from gitauditor.commands.worktree_cmd import (
+                    list_worktrees,
+                    create_worktree,
+                )
+
+                q = Prompt.ask("Nome do repositório original")
+                if wc == "1":
+                    list_worktrees(q)
+                else:
+                    b = Prompt.ask("Nome da nova branch")
+                    create_worktree(q, b)
+                Prompt.ask("\n[dim]Pressione ENTER para continuar[/dim]")
+            elif choice == "6":
+                handle_ai_amend(self)
+            elif choice == "7":
+                handle_manage_ssh(self)
+            elif choice == "8":
                 from gitauditor.commands.catalog_cmd import sync_catalog
 
                 sync_catalog()
                 self._load_catalog()
-            elif choice == "6":
+            elif choice == "9":
                 self._action_filter_table()
 
     def _load_catalog(self):
