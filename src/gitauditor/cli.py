@@ -18,6 +18,7 @@ from gitauditor.commands.worktree_cmd import worktree_app
 from gitauditor.commands.review_cmd import review_command
 from gitauditor.commands.changelog_cmd import changelog_command
 from gitauditor.commands.config_cmd import config_command
+from gitauditor.commands.policy_cmd import policy_app
 
 console = Console()
 
@@ -229,7 +230,7 @@ class GitAuditorCLI:
                     console.print("[red]ID inválido![/red]")
                 Prompt.ask("\n[dim]Pressione ENTER para continuar[/dim]")
 
-    def _load_catalog(self):
+    def _load_catalog(self, silent=False):
         from gitauditor.core.catalog import engine, init_db
         from gitauditor.core.models import Repo
         from sqlmodel import Session, select
@@ -248,27 +249,29 @@ class GitAuditorCLI:
                     }
         except Exception as e:
             if "no such column" in str(e) or "no such table" in str(e):
-                console.print(
-                    "\n[bold red]❌ O schema do banco de dados mudou (nova atualização).[/bold red]"
-                )
-                console.print(
-                    "[yellow]Por favor, apague o banco antigo e ressincronize:[/yellow]"
-                )
-                console.print(
-                    "rm ~/.gitauditor/catalog.db && gitauditor catalog sync\n"
-                )
+                if not silent:
+                    console.print(
+                        "\n[bold red]❌ O schema do banco de dados mudou (nova atualização).[/bold red]"
+                    )
+                    console.print(
+                        "[yellow]Por favor, apague o banco antigo e ressincronize:[/yellow]"
+                    )
+                    console.print(
+                        "rm ~/.gitauditor/catalog.db && gitauditor catalog sync\n"
+                    )
                 raise typer.Exit(1)
             else:
                 raise
 
-        if not self.repos:
-            console.print(
-                "\n[bold yellow]⚠️ O catálogo está vazio![/bold yellow] Rode [cyan]gitauditor catalog sync[/cyan] (Opção 5) para populá-lo."
-            )
-        else:
-            console.print(
-                f"\n[dim]Carregado do catálogo local: {len(self.repos)} repositórios.[/dim]"
-            )
+        if not silent:
+            if not self.repos:
+                console.print(
+                    "\n[bold yellow]⚠️ O catálogo está vazio![/bold yellow] Rode [cyan]gitauditor catalog sync[/cyan] (Opção 5) para populá-lo."
+                )
+            else:
+                console.print(
+                    f"\n[dim]Carregado do catálogo local: {len(self.repos)} repositórios.[/dim]"
+                )
 
     async def _audit_all_repos(self):
         self.repo_status.clear()
@@ -421,6 +424,7 @@ app.add_typer(
     catalog_app, name="catalog", help="Gerenciamento Inteligente do Catálogo (V3)"
 )
 app.add_typer(worktree_app, name="worktree", help="Gerenciador de Git Worktrees (P2)")
+app.add_typer(policy_app, name="policy", help="Motor de Políticas de Governança (P1)")
 app.command(name="review")(review_command)
 app.command(name="changelog")(changelog_command)
 app.command(name="config")(config_command)
@@ -434,10 +438,15 @@ def main_callback(ctx: typer.Context):
 
 
 @app.command()
-def scan():
+def scan(output_json: bool = typer.Option(False, "--json", help="Exporta a tabela como JSON estruturado")):
     """Realiza a varredura e exibe a tabela de repositórios."""
-    cli_state._load_catalog()
-    cli_state._show_repo_table()
+    cli_state._load_catalog(silent=output_json)
+    if output_json:
+        import json
+        out = [{"name": os.path.basename(p), "path": p, "status": cli_state.repo_status.get(p, {})} for p in cli_state.repos]
+        print(json.dumps(out, indent=2))
+    else:
+        cli_state._show_repo_table()
 
 
 @app.command()
