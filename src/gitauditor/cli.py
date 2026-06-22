@@ -14,6 +14,7 @@ from gitauditor.commands.amend_cmd import handle_ai_amend
 from gitauditor.commands.ssh_cmd import handle_manage_ssh
 from gitauditor.commands.audit_cmd import handle_audit_duplicates
 from gitauditor.commands.catalog_cmd import catalog_app
+from gitauditor.commands.worktree_cmd import worktree_app
 
 console = Console()
 
@@ -236,6 +237,7 @@ app = typer.Typer(help="GitAuditor CLI - IA Manager", invoke_without_command=Tru
 app.add_typer(
     catalog_app, name="catalog", help="Gerenciamento Inteligente do Catálogo (V3)"
 )
+app.add_typer(worktree_app, name="worktree", help="Gerenciador de Git Worktrees (P2)")
 cli_state = GitAuditorCLI()
 
 

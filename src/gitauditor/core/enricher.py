@@ -2,6 +2,29 @@ import asyncio
 import re
 
 
+def parse_remote_url(remote_url: str):
+    """Extrai host, owner, repo_name e canonical_name da URL."""
+    host = None
+    owner = None
+    canonical_name = None
+
+    if remote_url:
+        ssh_match = re.match(r"^git@([^:]+):([^/]+)/(.+?)(\.git)?$", remote_url)
+        https_match = re.match(r"^https?://([^/]+)/([^/]+)/(.+?)(\.git)?$", remote_url)
+
+        match = ssh_match or https_match
+        if match:
+            host = match.group(1)
+            owner = match.group(2)
+            repo_name = match.group(3)
+            if repo_name.endswith(".git"):
+                repo_name = repo_name[:-4]
+
+            canonical_name = f"{host}/{owner}/{repo_name}"
+
+    return host, owner, canonical_name
+
+
 async def get_repo_metadata(path: str):
     """Extrai informações do repositório como URL remota, host e owner."""
     remote_url = None
@@ -21,27 +44,7 @@ async def get_repo_metadata(path: str):
     except Exception:
         pass
 
-    host = None
-    owner = None
-    canonical_name = None
-
-    if remote_url:
-        # Padrões comuns de URL
-        # SSH: git@github.com:refernandes/gitauditor.git
-        ssh_match = re.match(r"^git@([^:]+):([^/]+)/(.+?)(\.git)?$", remote_url)
-        # HTTPS: https://github.com/refernandes/gitauditor.git
-        https_match = re.match(r"^https?://([^/]+)/([^/]+)/(.+?)(\.git)?$", remote_url)
-
-        match = ssh_match or https_match
-        if match:
-            host = match.group(1)
-            owner = match.group(2)
-            repo_name = match.group(3)
-            # Remove .git se ainda sobrar no nome
-            if repo_name.endswith(".git"):
-                repo_name = repo_name[:-4]
-
-            canonical_name = f"{host}/{owner}/{repo_name}"
+    host, owner, canonical_name = parse_remote_url(remote_url)
 
     # Todo: calcular size_mb no futuro
 
