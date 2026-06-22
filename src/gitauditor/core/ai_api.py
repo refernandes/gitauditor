@@ -1,6 +1,7 @@
 import json
 import httpx
 from typing import Optional
+from tenacity import retry, stop_after_attempt, wait_exponential
 from gitauditor.core.config import ConfigManager
 
 
@@ -24,14 +25,19 @@ class AIClient:
         else:
             self.base_url = self.ai_config.get("base_url", "")
 
+    @retry(
+        stop=stop_after_attempt(3), 
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry_error_callback=lambda _: None
+    )
     async def _generate_structured(
         self, prompt: str, schema_dict: dict, timeout: float = 120.0
     ) -> Optional[dict]:
         """
         Unified method to request structured JSON from different providers.
+        Retries up to 3 times on failure.
         """
-        try:
-            async with httpx.AsyncClient(timeout=timeout) as client:
+        async with httpx.AsyncClient(timeout=timeout) as client:
                 if self.provider == "ollama":
                     # Ollama direct generate endpoint
                     response = await client.post(
@@ -48,6 +54,8 @@ class AIClient:
                         raw = raw.removeprefix("```json").removesuffix("```").strip()
                         raw = raw.removeprefix("```").strip()
                         return json.loads(raw)
+                    else:
+                        raise Exception(f"Ollama API Error: {response.status_code} - {response.text}")
 
                 else:
                     # OpenAI / OpenRouter Chat Completions API
@@ -89,12 +97,7 @@ class AIClient:
                         raw = raw.removeprefix("```").strip()
                         return json.loads(raw)
                     else:
-                        print(f"Erro API: {response.status_code} - {response.text}")
-
-                return None
-        except Exception as e:
-            print(f"Exception calling AI API: {e}")
-            return None
+                        raise Exception(f"API Error: {response.status_code} - {response.text}")
 
     # ---------------------------------------------------------
     # GITAUDITOR SEMANTIC FEATURES

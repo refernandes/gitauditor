@@ -7,6 +7,18 @@ class GitService:
     """Serviço para interagir com repositórios Git usando GitPython."""
 
     @staticmethod
+    def _sanitize_hash(commit_hash: str) -> str:
+        """Sanitiza strings de hash para evitar injection no GitPython (--flag ou shell)."""
+        import re
+        if not commit_hash or not isinstance(commit_hash, str):
+            return "HEAD"
+        # Permite alfanuméricos, ~, ^, mas proíbe espaços, ; e duplos hifens
+        s = re.sub(r"[^a-zA-Z0-9~^\-]", "", commit_hash)
+        if "--" in s:
+            raise ValueError("Invalid commit hash format")
+        return s
+
+    @staticmethod
     def get_repo_details(path: str) -> Dict:
         """Obtém detalhes de um repositório."""
         try:
@@ -68,6 +80,7 @@ class GitService:
     @staticmethod
     def get_commit_diff(path: str, commit_hash: str = "HEAD") -> str:
         """Obtém o diff de um commit específico (padrão HEAD)."""
+        commit_hash = GitService._sanitize_hash(commit_hash)
         repo = git.Repo(path)
         try:
             return repo.git.show(commit_hash, "--stat", "--patch")
@@ -170,6 +183,7 @@ with open(sys.argv[1], "w") as file:
     @staticmethod
     def extract_diff_for_commit(path: str, commit_hash: str) -> str:
         """Isola o diff *exato* de um commit no histórico."""
+        commit_hash = GitService._sanitize_hash(commit_hash)
         repo = git.Repo(path)
         try:
             # Pega as estatísticas e as mudanças do commit em relação ao seu pai
@@ -183,6 +197,7 @@ with open(sys.argv[1], "w") as file:
     @staticmethod
     def reword_commit(path: str, commit_hash: str, new_message: str) -> bool:
         """Muda a mensagem de um commit antigo (mesmo longe no histórico) usando rebase interativo."""
+        commit_hash = GitService._sanitize_hash(commit_hash)
         import tempfile
         import subprocess
 
