@@ -15,6 +15,7 @@ from gitauditor.commands.repo_cmd import handle_repo_details
 from gitauditor.commands.amend_cmd import handle_ai_amend
 from gitauditor.commands.ssh_cmd import handle_manage_ssh
 from gitauditor.commands.audit_cmd import handle_audit_duplicates
+from gitauditor.commands.catalog_cmd import catalog_app
 
 console = Console()
 
@@ -240,6 +241,9 @@ class GitAuditorCLI:
 
 
 app = typer.Typer(help="GitAuditor CLI - IA Manager", invoke_without_command=True)
+app.add_typer(
+    catalog_app, name="catalog", help="Gerenciamento Inteligente do Catálogo (V3)"
+)
 cli_state = GitAuditorCLI()
 
 
