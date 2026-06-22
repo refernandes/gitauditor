@@ -68,6 +68,22 @@ class RepoTagSchema(BaseModel):
     )
 
 
+class RepoReviewSchema(BaseModel):
+    """
+    P3.3: Schema for Local Code Review
+    """
+
+    smells: list[str] = Field(
+        description="List of code smells or anti-patterns detected in the diff."
+    )
+    risks: list[str] = Field(
+        description="Architectural, performance or logic risks introduced by the changes."
+    )
+    praise: str = Field(
+        description="Positive feedback about what was done well in the code changes."
+    )
+
+
 # ---------------------------------------------------------
 # P3.1: Hierarchical Context Extractor & Hashing
 # ---------------------------------------------------------

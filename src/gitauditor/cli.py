@@ -15,6 +15,7 @@ from gitauditor.commands.ssh_cmd import handle_manage_ssh
 from gitauditor.commands.audit_cmd import handle_audit_duplicates
 from gitauditor.commands.catalog_cmd import catalog_app
 from gitauditor.commands.worktree_cmd import worktree_app
+from gitauditor.commands.review_cmd import review_command
 
 console = Console()
 
@@ -289,6 +290,7 @@ app.add_typer(
     catalog_app, name="catalog", help="Gerenciamento Inteligente do Catálogo (V3)"
 )
 app.add_typer(worktree_app, name="worktree", help="Gerenciador de Git Worktrees (P2)")
+app.command(name="review")(review_command)
 cli_state = GitAuditorCLI()
 
 

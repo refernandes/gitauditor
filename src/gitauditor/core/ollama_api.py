@@ -145,3 +145,39 @@ class OllamaClient:
                     return heuristic_tags
         except Exception:
             return heuristic_tags
+
+    async def analyze_local_diff(self, diff_content: str) -> Optional[dict]:
+        """
+        P3.3: Analyze local diff for code smells and risks.
+        """
+        from gitauditor.core.semantic import RepoReviewSchema
+
+        prompt = (
+            "You are a strict and senior software reviewer.\n"
+            "Review the following code diff for code smells, anti-patterns, and architectural risks. "
+            "Do NOT focus on secrets (we use deterministic scanners for that).\n"
+            "Return a JSON adhering strictly to the provided JSON schema.\n\n"
+            f"DIFF:\n{diff_content}\n"
+        )
+
+        try:
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                response = await client.post(
+                    f"{self.base_url}/api/generate",
+                    json={
+                        "model": self.model,
+                        "prompt": prompt,
+                        "stream": False,
+                        "format": RepoReviewSchema.model_json_schema(),
+                    },
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    raw_json = data.get("response", "{}").strip()
+                    try:
+                        return json.loads(raw_json)
+                    except Exception:
+                        return None
+                return None
+        except Exception:
+            return None
