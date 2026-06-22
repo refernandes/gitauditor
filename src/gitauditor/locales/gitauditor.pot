@@ -1,0 +1,67 @@
+# Translations template for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-06-22 07:52-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: src/gitauditor/cli.py:44
+msgid ""
+"GitAuditor - O seu assistente IA e motor de políticas para repositórios "
+"Git."
+msgstr ""
+
+#: src/gitauditor/cli.py:451
+msgid "Catálogo Local de Repositórios"
+msgstr ""
+
+#: src/gitauditor/cli.py:452
+msgid "Operações de Repositório (IA, Changelog, Amend)"
+msgstr ""
+
+#: src/gitauditor/cli.py:453
+msgid "Gerenciador de Git Worktrees"
+msgstr ""
+
+#: src/gitauditor/cli.py:454
+msgid "Motor de Políticas de Governança e Auditoria"
+msgstr ""
+
+#: src/gitauditor/cli.py:459
+msgid "Configurações do GitAuditor"
+msgstr ""
+
+#: src/gitauditor/cli.py:508
+msgid "Gerenciar Chaves e Identidades SSH."
+msgstr ""
+
+#: src/gitauditor/commands/repo_app.py:7
+msgid "Operações de Repositório (Revisão, Changelog, Histórico, etc)"
+msgstr ""
+
+#: src/gitauditor/commands/repo_app.py:8
+msgid ""
+"\n"
+"Exemplos práticos:\n"
+"  $ gitauditor repo review .                  # Analisa o diff no "
+"diretório atual\n"
+"  $ gitauditor repo changelog --limit 10      # Gera notas de release "
+"para 10 commits\n"
+"  $ gitauditor repo amend                     # Reescreve histórico "
+"interativamente\n"
+"  $ gitauditor repo details                   # Visualiza detalhes de um "
+"projeto\n"
+msgstr ""
+
