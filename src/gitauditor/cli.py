@@ -82,16 +82,31 @@ class GitAuditorCLI:
         from sqlmodel import Session, select
 
         init_db()
-        with Session(engine) as session:
-            repos_db = session.exec(select(Repo)).all()
-            self.repos = [r.path for r in repos_db]
+        try:
+            with Session(engine) as session:
+                repos_db = session.exec(select(Repo)).all()
+                self.repos = [r.path for r in repos_db]
 
-            # Map existing status from DB if any
-            for r in repos_db:
-                self.repo_status[r.path] = {
-                    "icon": r.status if r.status != "Unknown" else "⚪",
-                    "reason": "Lido do catálogo",
-                }
+                # Map existing status from DB if any
+                for r in repos_db:
+                    self.repo_status[r.path] = {
+                        "icon": r.status if r.status != "Unknown" else "⚪",
+                        "reason": "Lido do catálogo",
+                    }
+        except Exception as e:
+            if "no such column" in str(e) or "no such table" in str(e):
+                console.print(
+                    "\n[bold red]❌ O schema do banco de dados mudou (nova atualização).[/bold red]"
+                )
+                console.print(
+                    "[yellow]Por favor, apague o banco antigo e ressincronize:[/yellow]"
+                )
+                console.print(
+                    "rm ~/.gitauditor/catalog.db && gitauditor catalog sync\n"
+                )
+                raise typer.Exit(1)
+            else:
+                raise
 
         if not self.repos:
             console.print(
