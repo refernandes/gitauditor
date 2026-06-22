@@ -41,9 +41,39 @@ A partir de agora, o comando global `gitauditor` estará disponível no seu term
 
 ---
 
-## 🛠️ Como Usar (Comandos Principais)
+## 🖥️ A Interface Visual (O Modo Interativo)
 
-O GitAuditor fornece tanto uma **UI Interativa** (digitando apenas `gitauditor`) quanto um conjunto de comandos diretos para automação.
+Ao digitar apenas `gitauditor` no terminal, você acessa a interface interativa (UI) construída com `Rich`. Essa interface apresenta uma tabela central com todos os seus repositórios e um menu de ações inferior.
+
+Na **Versão 3**, foi adicionado o Submenu de Inteligência Artificial para que você possa rodar qualquer ferramenta sem precisar decorar comandos de terminal:
+
+```text
+[bold yellow]Menu Principal:[/bold yellow]
+[1] 🔍 Ver Detalhes de um Repositório
+[2] 📂 Buscar e Abrir no Editor (Open)
+[3] 📊 Dashboard de Saúde do Catálogo
+[4] 🧹 Resolver Repositórios Duplicados
+[5] 🌳 Gerenciar Git Worktrees
+[6] 🤖 Ferramentas de Inteligência Artificial (V3)
+[7] 🔑 Gerenciar Chaves e Identidades SSH
+[8] 🔄 Sincronizar Catálogo Local
+[9] 🏷️ Filtrar Tabela
+[0] 🚪 Sair
+```
+
+Ao escolher a **Opção 6**, você terá acesso a todo o poder Semântico em cima da tabela visual (o sistema te pedirá o ID do repositório antes de rodar a IA):
+- `[1] IA Amend`
+- `[2] IA Code Review`
+- `[3] IA Changelog`
+- `[4] IA Configuração (Mudar Provedor)`
+- `[5] IA Auto-Tagging`
+- `[6] IA Summarize`
+
+---
+
+## 🛠️ O Modo Automação (CLI Commands)
+
+Se você prefere scripts ou comandos diretos, todas as opções da UI também funcionam via subcomandos CLI.
 
 ### 1. Configurando sua Inteligência Artificial
 Você pode escolher qual motor cognitivo o GitAuditor vai usar (Ollama para rodar 100% offline, OpenAI ou OpenRouter para modelos avançados em nuvem).
