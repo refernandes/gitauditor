@@ -65,20 +65,40 @@ gitauditor worktree create api feature/teste
 
 ## 5. Backlog Futuro: Phase 3 (Semantic AI Layer)
 
-A próxima grande evolução do GitAuditor foca em usar LLMs Locais (Ollama) não apenas como geradores de mensagens de commit, mas como uma **Camada Semântica Local** sobre o inventário Git.
+A próxima grande evolução do GitAuditor foca em integrar Inteligência Artificial (LLMs Locais via Ollama ou APIs Externas plugáveis) não apenas como geradores de mensagens, mas como uma **Camada Semântica Confiável** sobre o inventário Git.
 
-### O Novo Papel da IA
-Em vez de inferência vazia, a IA atua como uma heurística enriquecedora para as tabelas do catálogo local. Os repositórios ganharão os seguintes atributos inteligentes gerados em background:
-- `ai_summary`: Resumo curto do propósito do projeto.
-- `ai_stack`: Tecnologias detectadas (Python, React, Docker, etc).
-- `ai_tags`: Categorização automática (`work`, `study`, `lab`, `archive`, `infra`, `api`).
-- `ai_risk`: Risco estimado e nível de atividade (abandono, experimental, prod).
+### Princípios de Design e Governança
+Para que a IA adicione valor real sem transformar o produto em uma caixa de surpresas, as seguintes regras guiarão a arquitetura P3:
 
-### Features Estratégicas P3
-1. **Catalog Summarize:** `gitauditor catalog summarize` lê árvores de diretórios (usando técnicas de empacotamento leve como `repomix --no-files`) e gera os resumos de cada repo não-mapeado do catálogo.
-2. **Auto-Tagging:** `gitauditor catalog tag --auto` propõe categorias baseadas em heurísticas e na arquitetura de pastas.
-3. **Local Review:** `gitauditor repo review` revisa o `diff` local ou staged, apontando *code smells* e riscos de arquitetura antes do `push`.
-4. **Readme Draft:** `gitauditor repo readme-draft` lê a estrutura do código e os históricos e rascunha documentação para projetos esquecidos.
+1. **Multi-Provider API:** A camada de LLM deve ser agnóstica, permitindo o uso do Ollama local por padrão, mas com portas abertas para provedores externos via chaves de API.
+2. **Governança no Catálogo:** O banco de dados (`Repo`) não guardará apenas as respostas. Ele rastreará a proveniência: `ai_model`, `ai_prompt_version`, `ai_updated_at`, `ai_confidence`, `ai_error` e `ai_source_hash`.
+3. **Estratégia de Cache e Hash:** A IA só será chamada se o contexto base do repositório mudar. Se o hash do README + manifestos + árvore for o mesmo, lemos do banco.
+4. **Validação Estruturada (Pydantic) + Retry:** As saídas da IA deverão seguir schemas JSON estritos e separados por feature, com lógica de retry caso a estrutura venha inválida.
+5. **Heurística Antes da IA (Fallback Determinístico):** A classificação (`tag`) começará sempre por regras rígidas e determinísticas (ex: detectar `package.json`). O LLM entra como enriquecedor. Se o LLM falhar, a heurística garante a funcionalidade.
+6. **Limites do LLM:** No *repo review*, a IA não substituirá scanners de segurança (como gitleaks). Ela focará em smells qualitativos, arquitetura e dicas humanas.
+7. **Contexto Hierárquico Inteligente:** O extrator não vai só cuspir a pasta inteira para o LLM. Ele enviará metadados do Git, a árvore resumida por profundidade, o README truncado, manifestos chaves (`pyproject.toml`, `package.json`, etc) e excluirá arquivos nocivos (`.venv`, `node_modules`).
+
+### Roadmap Fatiado da Fase P3
+
+Para evitar complexidade monstruosa, a implementação será feita em 4 entregas atômicas:
+
+- **P3.1 | Summarize & Foundation:**
+  - Adição dos campos semânticos e de governança no banco SQLite.
+  - Implementação do "Extrator de Contexto" hierárquico com cálculo de Hash.
+  - Implementação do motor Multi-Provider de IA com Structured Outputs (JSON) usando Pydantic.
+  - Comando: `gitauditor catalog summarize`.
+
+- **P3.2 | Auto-Tagging Híbrido:**
+  - Comando: `gitauditor catalog tag --auto`.
+  - Inferência primeiro determinística, depois refinada pela IA para categorizar projetos (`work`, `api`, `lab`, `archive`).
+
+- **P3.3 | Local Review (Code Quality):**
+  - Comando: `gitauditor repo review`.
+  - Foco restrito em analisar diffs curtos ou *staged* para apontar falhas qualitativas de design antes do commit.
+
+- **P3.4 | Rascunho de Documentação:**
+  - Comando: `gitauditor repo readme-draft`.
+  - Geração estruturada de READMEs a partir da stack detectada para reativar repositórios "mortos".
 
 ---
-*Status: P0, P1, P2 Concluídos com sucesso na Versão 3. Iniciando desenho arquitetural da Fase P3 (Semantic Layer).*
+*Status: P0, P1, P2 Concluídos na Versão 3. Fase P3 em estágio de arquitetura e aprovação.*
