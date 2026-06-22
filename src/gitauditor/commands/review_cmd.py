@@ -59,9 +59,9 @@ def review_command(
         "[cyan]Chamando Ollama para review (isso pode levar alguns segundos)...[/cyan]"
     )
 
-    from gitauditor.core.ollama_api import OllamaClient
+    from gitauditor.core.ai_api import AIClient
 
-    client = OllamaClient()
+    client = AIClient()
 
     async def run_review():
         result = await client.analyze_local_diff(diff_text)

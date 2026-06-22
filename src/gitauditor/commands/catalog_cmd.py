@@ -207,11 +207,11 @@ def summarize_catalog(
     from gitauditor.core.models import Repo
     from sqlmodel import Session, select
     from gitauditor.core.semantic import extract_repo_context
-    from gitauditor.core.ollama_api import OllamaClient
+    from gitauditor.core.ai_api import AIClient
     from datetime import datetime
 
     init_db()
-    client = OllamaClient()
+    client = AIClient()
 
     with Session(engine) as session:
         query = select(Repo)
@@ -293,10 +293,10 @@ def tag_auto_catalog(
     from sqlmodel import Session, select
     from gitauditor.core.heuristics import generate_heuristic_tags
     from gitauditor.core.semantic import extract_repo_context
-    from gitauditor.core.ollama_api import OllamaClient
+    from gitauditor.core.ai_api import AIClient
 
     init_db()
-    client = OllamaClient()
+    client = AIClient()
 
     with Session(engine) as session:
         query = select(Repo)

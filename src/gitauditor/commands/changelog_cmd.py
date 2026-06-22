@@ -70,9 +70,9 @@ def changelog_command(
         "[cyan]Chamando Ollama para gerar Changelog (isso pode levar alguns segundos)...[/cyan]"
     )
 
-    from gitauditor.core.ollama_api import OllamaClient
+    from gitauditor.core.ai_api import AIClient
 
-    client = OllamaClient()
+    client = AIClient()
 
     async def run_changelog():
         result = await client.generate_changelog(commits_log)

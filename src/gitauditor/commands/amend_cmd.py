@@ -147,12 +147,12 @@ def _process_single_amend(
             console.print(f"[yellow]{escape(diff[:1000]) if diff else ''}[/yellow]")
             return True  # Retorna True para não cancelar o lote inteiro
 
-        status.update("[bold green]Enviando diff para o Ollama gerar nova mensagem...")
-        suggestion = asyncio.run(cli.ollama.suggest_commit_message(diff))
+        status.update("[bold green]Enviando diff para a IA gerar nova mensagem...")
+        suggestion = asyncio.run(
+            cli.ai_client.analyze_commit_message(target_commit["message"], diff)
+        )
 
-    console.print(
-        Panel(suggestion, title="Sugestão da IA (Ollama)", border_style="green")
-    )
+    console.print(Panel(suggestion, title="Sugestão da IA", border_style="green"))
 
     # Memória de tratamento: se a mensagem atual já é exatamente a sugestão, pula automaticamente
     if target_commit["message"].strip() == suggestion.strip():
