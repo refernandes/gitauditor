@@ -84,6 +84,24 @@ class RepoReviewSchema(BaseModel):
     )
 
 
+class RepoChangelogSchema(BaseModel):
+    """
+    P3.4: Schema for Changelog Generation
+    """
+
+    version: str = Field(
+        description="Suggested version or timeframe name (e.g., 'v1.0.0' or 'Recent Updates')."
+    )
+    summary: str = Field(
+        description="A human-readable paragraph summarizing the evolution of the code."
+    )
+    features: list[str] = Field(description="List of new features added.")
+    fixes: list[str] = Field(description="List of bugs or issues fixed.")
+    breaking_changes: list[str] = Field(
+        description="List of breaking changes or major refactors."
+    )
+
+
 # ---------------------------------------------------------
 # P3.1: Hierarchical Context Extractor & Hashing
 # ---------------------------------------------------------

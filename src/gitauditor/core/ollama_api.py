@@ -181,3 +181,39 @@ class OllamaClient:
                 return None
         except Exception:
             return None
+
+    async def generate_changelog(self, commits_log: str) -> Optional[dict]:
+        """
+        P3.4: Generate a changelog based on a list of commits.
+        """
+        from gitauditor.core.semantic import RepoChangelogSchema
+
+        prompt = (
+            "You are an expert technical writer and release manager.\n"
+            "Analyze the following list of git commits and generate a structured human-readable changelog/release notes.\n"
+            "Group the information into features, fixes, and breaking changes. Summarize the overall evolution.\n"
+            "Return a JSON adhering strictly to the provided JSON schema.\n\n"
+            f"COMMITS LOG:\n{commits_log}\n"
+        )
+
+        try:
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                response = await client.post(
+                    f"{self.base_url}/api/generate",
+                    json={
+                        "model": self.model,
+                        "prompt": prompt,
+                        "stream": False,
+                        "format": RepoChangelogSchema.model_json_schema(),
+                    },
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    raw_json = data.get("response", "{}").strip()
+                    try:
+                        return json.loads(raw_json)
+                    except Exception:
+                        return None
+                return None
+        except Exception:
+            return None

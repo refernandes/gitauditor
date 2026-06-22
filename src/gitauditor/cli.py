@@ -16,6 +16,7 @@ from gitauditor.commands.audit_cmd import handle_audit_duplicates
 from gitauditor.commands.catalog_cmd import catalog_app
 from gitauditor.commands.worktree_cmd import worktree_app
 from gitauditor.commands.review_cmd import review_command
+from gitauditor.commands.changelog_cmd import changelog_command
 
 console = Console()
 
@@ -291,6 +292,7 @@ app.add_typer(
 )
 app.add_typer(worktree_app, name="worktree", help="Gerenciador de Git Worktrees (P2)")
 app.command(name="review")(review_command)
+app.command(name="changelog")(changelog_command)
 cli_state = GitAuditorCLI()
 
 
