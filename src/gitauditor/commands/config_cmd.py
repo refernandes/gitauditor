@@ -79,10 +79,20 @@ def config_command():
 
         ai_config["base_url"] = "https://openrouter.ai/api/v1"
 
+    # Language Selection
+    console.print("\n[dim]Configuração de Idioma / Language Settings[/dim]")
+    current_lang = config.get("lang", "pt_BR")
+    lang_choice = Prompt.ask(
+        "Selecione o Idioma / Select Language: [1] Português (pt_BR) [2] English (en_US)",
+        choices=["1", "2"],
+        default="1" if current_lang == "pt_BR" else "2"
+    )
+    config["lang"] = "pt_BR" if lang_choice == "1" else "en_US"
+
     config["ai"] = ai_config
     ConfigManager.save_config(config)
 
     console.print("\n[bold green]✅ Configuração salva com sucesso![/bold green]")
     console.print(
-        f"O GitAuditor agora usará: [bold cyan]{selected_provider.upper()}[/bold cyan] ({ai_config['model']})"
+        f"O GitAuditor agora usará: [bold cyan]{selected_provider.upper()}[/bold cyan] ({ai_config['model']}) em [bold]{config['lang']}[/bold]"
     )

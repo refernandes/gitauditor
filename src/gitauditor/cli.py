@@ -9,16 +9,42 @@ from rich.prompt import Prompt
 from gitauditor.core.scanner import GitScanner
 from gitauditor.core.ai_api import AIClient
 
-from gitauditor.commands.repo_cmd import handle_repo_details
-from gitauditor.commands.amend_cmd import handle_ai_amend
 from gitauditor.commands.ssh_cmd import handle_manage_ssh
-from gitauditor.commands.audit_cmd import handle_audit_duplicates
 from gitauditor.commands.catalog_cmd import catalog_app
 from gitauditor.commands.worktree_cmd import worktree_app
-from gitauditor.commands.review_cmd import review_command
-from gitauditor.commands.changelog_cmd import changelog_command
 from gitauditor.commands.config_cmd import config_command
 from gitauditor.commands.policy_cmd import policy_app
+from gitauditor.commands.repo_app import repo_app
+
+# --- Inicialização da Internacionalização (i18n) ---
+import gettext
+import json
+
+lang_to_use = "pt_BR"
+try:
+    config_path = os.path.expanduser("~/.gitauditor.json")
+    if os.path.exists(config_path):
+        with open(config_path, "r") as f:
+            cfg = json.load(f)
+            lang_to_use = cfg.get("lang", "pt_BR")
+except:
+    pass
+
+localedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'locales')
+try:
+    translate = gettext.translation('gitauditor', localedir, languages=[lang_to_use], fallback=True)
+    translate.install()
+    _ = translate.gettext
+except Exception:
+    import builtins
+    builtins.__dict__['_'] = lambda x: x
+# ----------------------------------------------------
+
+app = typer.Typer(
+    help=_("GitAuditor - O seu assistente IA e motor de políticas para repositórios Git."),
+    invoke_without_command=True,
+    epilog="Dica: Use [bold]gitauditor ui[/bold] para o menu interativo clássico."
+)
 
 console = Console()
 
@@ -420,94 +446,68 @@ class GitAuditorCLI:
 
 
 app = typer.Typer(help="GitAuditor CLI - IA Manager", invoke_without_command=True)
-app.add_typer(
-    catalog_app, name="catalog", help="Gerenciamento Inteligente do Catálogo (V3)"
-)
-app.add_typer(worktree_app, name="worktree", help="Gerenciador de Git Worktrees (P2)")
-app.add_typer(policy_app, name="policy", help="Motor de Políticas de Governança (P1)")
-app.command(name="review")(review_command)
-app.command(name="changelog")(changelog_command)
-app.command(name="config")(config_command)
+
+# Registra os Sub-Apps Oficiais
+app.add_typer(catalog_app, name="catalog", help=_("Catálogo Local de Repositórios"))
+app.add_typer(repo_app, name="repo", help=_("Operações de Repositório (IA, Changelog, Amend)"))
+app.add_typer(worktree_app, name="worktree", help=_("Gerenciador de Git Worktrees"))
+app.add_typer(policy_app, name="policy", help=_("Motor de Políticas de Governança e Auditoria"))
+
+# Aliases Curtos e Escondidos (User Request)
+app.add_typer(worktree_app, name="wt", hidden=True)
+
+app.command(name="config", help=_("Configurações do GitAuditor"))(config_command)
 cli_state = GitAuditorCLI()
 
-
-@app.callback()
+@app.callback(invoke_without_command=True)
 def main_callback(ctx: typer.Context):
     if ctx.invoked_subcommand is None:
         cli_state.run()
 
-
 @app.command()
-def scan(output_json: bool = typer.Option(False, "--json", help="Exporta a tabela como JSON estruturado")):
-    """Realiza a varredura e exibe a tabela de repositórios."""
-    cli_state._load_catalog(silent=output_json)
-    if output_json:
-        import json
-        out = [{"name": os.path.basename(p), "path": p, "status": cli_state.repo_status.get(p, {})} for p in cli_state.repos]
-        print(json.dumps(out, indent=2))
-    else:
-        cli_state._show_repo_table()
+def ui():
+    """Modo Interativo (UI/Launcher Clássico)."""
+    cli_state.run()
 
+@app.command(name="sync", hidden=True)
+def sync_shortcut():
+    """Alias para catalog sync"""
+    from gitauditor.commands.catalog_cmd import sync_catalog
+    sync_catalog()
 
-@app.command()
-def amend():
-    """IA Amend (Reescrever histórico guiado por IA)."""
-    cli_state._load_catalog()
-    cli_state._show_repo_table()
-    handle_ai_amend(cli_state)
+@app.command(name="health", hidden=True)
+def health_shortcut():
+    """Alias para catalog health"""
+    from gitauditor.commands.catalog_cmd import health_dashboard
+    health_dashboard()
 
+@app.command(name="history", hidden=True)
+def history_shortcut(limit: int = 20):
+    """Alias para policy log"""
+    from gitauditor.commands.policy_cmd import policy_log
+    policy_log(limit=limit)
 
-@app.command()
-def audit():
-    """Auditoria de Repositórios (Duplicados e Branches)."""
-    cli_state._load_catalog()
-    handle_audit_duplicates(cli_state)
+@app.command(name="amend", hidden=True)
+def amend_shortcut():
+    """Alias para repo amend"""
+    from gitauditor.commands.repo_app import repo_amend
+    repo_amend()
 
+@app.command(name="details", hidden=True)
+def details_shortcut():
+    """Alias para repo details"""
+    from gitauditor.commands.repo_app import repo_details
+    repo_details()
 
-@app.command()
-def ssh():
-    """Gerenciar Chaves e Identidades SSH."""
+@app.command(name="review", hidden=True)
+def review_shortcut(path: str = ".", staged: bool = False):
+    """Alias para repo review"""
+    from gitauditor.commands.review_cmd import review_command
+    review_command(path=path, staged=staged)
+
+@app.command(name="ssh", help=_("Gerenciar Chaves e Identidades SSH."))
+def ssh_cmd():
     handle_manage_ssh(cli_state)
-
-
-@app.command()
-def details():
-    """Ver Detalhes de um Repositório."""
-    cli_state._load_catalog()
-    cli_state._show_repo_table()
-    handle_repo_details(cli_state)
-
-
-@app.command()
-def history(limit: int = 20):
-    """Exibe o histórico de auditoria local (comandos executados e IA)."""
-    from gitauditor.core.audit_log import audit_engine, AuditRecord, init_audit_db
-    from sqlmodel import Session, select
-    from rich.table import Table
-
-    init_audit_db()
-    with Session(audit_engine) as session:
-        records = session.exec(select(AuditRecord).order_by(AuditRecord.id.desc()).limit(limit)).all()
-
-    if not records:
-        console.print("[yellow]Nenhum registro de auditoria encontrado.[/yellow]")
-        return
-
-    table = Table(title=f"Histórico de Auditoria (Últimos {limit})", show_header=True, header_style="bold magenta")
-    table.add_column("Data", style="dim", width=16)
-    table.add_column("Comando", style="cyan")
-    table.add_column("Status", justify="center")
-    table.add_column("Resumo", style="white")
-    table.add_column("IA", style="dim")
-
-    for r in records:
-        dt = r.timestamp.strftime("%Y-%m-%d %H:%M")
-        status_color = "green" if r.status == "SUCCESS" else "red" if r.status == "ERROR" else "yellow"
-        st = f"[{status_color}]{r.status}[/{status_color}]"
-        ai_info = f"{r.ai_provider}/{r.ai_model}" if r.ai_provider else "-"
-        table.add_row(dt, r.command, st, r.summary, ai_info)
-
-    console.print(table)
 
 
 if __name__ == "__main__":
