@@ -4,9 +4,10 @@ import os
 import hashlib
 from typing import Optional
 
+
 class OllamaClient:
     """Cliente para interagir com o Ollama local."""
-    
+
     def __init__(self, base_url: str = "http://localhost:11434", model: str = "llama3"):
         self.base_url = base_url
         self.model = model
@@ -31,39 +32,35 @@ class OllamaClient:
 
     async def suggest_commit_message(self, diff: str) -> Optional[str]:
         """Envia um diff para o Ollama e solicita uma mensagem convencional."""
-        
+
         # Cria hash do diff para usar como chave de cache (Memória Curta/Longa)
-        diff_hash = hashlib.sha256(diff.encode('utf-8', errors='ignore')).hexdigest()
-        
+        diff_hash = hashlib.sha256(diff.encode("utf-8", errors="ignore")).hexdigest()
+
         if diff_hash in self.cache:
             return self.cache[diff_hash]
-            
+
         prompt = (
             "Abaixo está o diff de um commit Git. "
             "Sugira uma mensagem de commit curta e concisa seguindo o padrão Conventional Commits (ex: feat: add logging). "
             "Responda APENAS com a mensagem sugerida, sem explicações.\n\n"
-            f"DIFF:\n{diff[:2000]}" # Limitando o tamanho do diff para o prompt
+            f"DIFF:\n{diff[:2000]}"  # Limitando o tamanho do diff para o prompt
         )
 
         try:
             async with httpx.AsyncClient(timeout=60.0) as client:
                 response = await client.post(
                     f"{self.base_url}/api/generate",
-                    json={
-                        "model": self.model,
-                        "prompt": prompt,
-                        "stream": False
-                    }
+                    json={"model": self.model, "prompt": prompt, "stream": False},
                 )
-                
+
                 if response.status_code == 200:
                     data = response.json()
                     suggestion = data.get("response", "").strip()
-                    
+
                     # Salva no cache
                     self.cache[diff_hash] = suggestion
                     self._save_cache()
-                    
+
                     return suggestion
                 else:
                     return f"Erro Ollama: Status {response.status_code}"

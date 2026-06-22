@@ -1,33 +1,57 @@
 import os
 import asyncio
-from typing import List, Set, Optional
+from typing import List
 
 # Reutilizando a lista de diretórios ignorados do seu script original
 IGNORED_DIRS = {
-    'node_modules', '.cache', 'venv', 'env', '.env', 
-    'build', 'target', 'dist', '.tox', '.rustup', '.cargo',
-    '__pycache__', '.idea', '.vscode',
-    'proc', 'sys', 'dev', 'run', 'boot', 'tmp', 'var', 'snap',
-    'Windows', 'Program Files', 'Program Files (x86)', 'AppData', '$RECYCLE.BIN', 'System Volume Information'
+    "node_modules",
+    ".cache",
+    "venv",
+    "env",
+    ".env",
+    "build",
+    "target",
+    "dist",
+    ".tox",
+    ".rustup",
+    ".cargo",
+    "__pycache__",
+    ".idea",
+    ".vscode",
+    "proc",
+    "sys",
+    "dev",
+    "run",
+    "boot",
+    "tmp",
+    "var",
+    "snap",
+    "Windows",
+    "Program Files",
+    "Program Files (x86)",
+    "AppData",
+    "$RECYCLE.BIN",
+    "System Volume Information",
 }
+
 
 class GitScanner:
     """Serviço assíncrono para varredura de repositórios Git."""
-    
+
     def __init__(self, callback=None):
         self.found_repos = []
         self.is_scanning = False
-        self.callback = callback # Função chamada a cada repo encontrado
+        self.callback = callback  # Função chamada a cada repo encontrado
 
     async def scan(self, root_dirs: List[str]) -> List[str]:
         """Inicia a varredura assíncrona nos diretórios raiz fornecidos."""
         self.is_scanning = True
         self.found_repos = []
-        
+
         # Cria tarefas para cada raiz (ex: discos diferentes no Windows ou pastas no Linux)
         tasks = [self._scan_dir(d) for d in root_dirs]
         await asyncio.gather(*tasks)
-        
+
         self.is_scanning = False
         return self.found_repos
 
@@ -47,12 +71,16 @@ class GitScanner:
         """Executa o walk de forma síncrona dentro de uma thread separada."""
         for root, dirs, files in os.walk(directory, topdown=True):
             # Filtra in-place para eficiência
-            dirs[:] = [d for d in dirs if d not in IGNORED_DIRS and (not d.startswith('.') or d == '.git')]
-            
-            if '.git' in dirs:
+            dirs[:] = [
+                d
+                for d in dirs
+                if d not in IGNORED_DIRS and (not d.startswith(".") or d == ".git")
+            ]
+
+            if ".git" in dirs:
                 full_path = os.path.abspath(root)
                 self.found_repos.append(full_path)
                 if self.callback:
                     # O callback precisa lidar com a thread se for atualizar UI
                     self.callback(full_path)
-                dirs.remove('.git') # Não entra dentro da pasta .git
+                dirs.remove(".git")  # Não entra dentro da pasta .git
