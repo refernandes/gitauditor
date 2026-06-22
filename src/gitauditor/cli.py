@@ -6,16 +6,6 @@ from rich.table import Table
 from rich.panel import Panel
 from rich.prompt import Prompt
 
-from gitauditor.core.scanner import GitScanner
-from gitauditor.core.ai_api import AIClient
-
-from gitauditor.commands.ssh_cmd import handle_manage_ssh
-from gitauditor.commands.catalog_cmd import catalog_app
-from gitauditor.commands.worktree_cmd import worktree_app
-from gitauditor.commands.config_cmd import config_command
-from gitauditor.commands.policy_cmd import policy_app
-from gitauditor.commands.repo_app import repo_app
-
 # --- Inicialização da Internacionalização (i18n) ---
 import gettext
 import json
@@ -39,6 +29,16 @@ except Exception:
     import builtins
     builtins.__dict__['_'] = lambda x: x
 # ----------------------------------------------------
+
+from gitauditor.core.scanner import GitScanner
+from gitauditor.core.ai_api import AIClient
+
+from gitauditor.commands.ssh_cmd import handle_manage_ssh
+from gitauditor.commands.catalog_cmd import catalog_app
+from gitauditor.commands.worktree_cmd import worktree_app
+from gitauditor.commands.config_cmd import config_command
+from gitauditor.commands.policy_cmd import policy_app
+from gitauditor.commands.repo_app import repo_app
 
 app = typer.Typer(
     help=_("GitAuditor - O seu assistente IA e motor de políticas para repositórios Git."),

@@ -4,14 +4,14 @@ from rich.console import Console
 
 console = Console()
 repo_app = typer.Typer(
-    help="Operações de Repositório (Revisão, Changelog, Histórico, etc)",
-    epilog="""
+    help=_("Operações de Repositório (Revisão, Changelog, Histórico, etc)"),
+    epilog=_("""
 Exemplos práticos:
   $ gitauditor repo review .                  # Analisa o diff no diretório atual
   $ gitauditor repo changelog --limit 10      # Gera notas de release para 10 commits
   $ gitauditor repo amend                     # Reescreve histórico interativamente
   $ gitauditor repo details                   # Visualiza detalhes de um projeto
-"""
+""")
 )
 
 @repo_app.command("review")
