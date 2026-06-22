@@ -52,7 +52,7 @@ class GitAuditorCLI:
             console.print("[3] 📊 Dashboard de Saúde do Catálogo")
             console.print("[4] 🧹 Resolver Repositórios Duplicados")
             console.print("[5] 🌳 Gerenciar Git Worktrees")
-            console.print("[6] 🤖 IA Amend (Reescrever histórico guiado por IA)")
+            console.print("[6] 🤖 Ferramentas de Inteligência Artificial (V3)")
             console.print("[7] 🔑 Gerenciar Chaves e Identidades SSH")
             console.print("[8] 🔄 Sincronizar Catálogo Local")
             console.print(
@@ -104,7 +104,7 @@ class GitAuditorCLI:
                     create_worktree(q, b)
                 Prompt.ask("\n[dim]Pressione ENTER para continuar[/dim]")
             elif choice == "6":
-                handle_ai_amend(self)
+                self._show_ai_menu()
             elif choice == "7":
                 handle_manage_ssh(self)
             elif choice == "8":
@@ -114,6 +114,103 @@ class GitAuditorCLI:
                 self._load_catalog()
             elif choice == "9":
                 self._action_filter_table()
+
+    def _show_ai_menu(self):
+        while True:
+            console.print(
+                "\n[bold magenta]🤖 Ferramentas de Inteligência Artificial:[/bold magenta]"
+            )
+            console.print("[1] 📝 IA Amend (Reescrever histórico guiado por IA)")
+            console.print("[2] 🕵️‍♂️ IA Code Review (Analisar código não commitado)")
+            console.print("[3] 📜 IA Changelog (Gerar notas de versão)")
+            console.print("[4] ⚙️  IA Configuração (Mudar Provedor/Modelo)")
+            console.print("[5] 🏷️  IA Auto-Tagging (Classificar repositório)")
+            console.print("[6] 📚 IA Summarize (Resumir e mapear tech stack)")
+            console.print("[0] 🔙 Voltar ao Menu Principal")
+
+            ai_choice = Prompt.ask(
+                "Escolha a ferramenta de IA",
+                choices=["0", "1", "2", "3", "4", "5", "6"],
+                default="0",
+            )
+            if ai_choice == "0":
+                break
+            elif ai_choice == "1":
+                from gitauditor.commands.amend_cmd import handle_ai_amend
+
+                handle_ai_amend(self)
+            elif ai_choice == "2":
+                import asyncio
+                from gitauditor.commands.review_cmd import review_command
+
+                if not self.repos:
+                    console.print("[red]Catálogo vazio.[/red]")
+                    continue
+                repo_idx = Prompt.ask("Digite o ID do repositório")
+                if repo_idx.isdigit() and 0 <= int(repo_idx) < len(self.repos):
+                    repo_path = self.repos[int(repo_idx)]
+                    review_command(path=repo_path)
+                else:
+                    console.print("[red]ID inválido![/red]")
+
+                Prompt.ask("\n[dim]Pressione ENTER para continuar[/dim]")
+
+            elif ai_choice == "3":
+                from gitauditor.commands.changelog_cmd import changelog_command
+
+                if not self.repos:
+                    console.print("[red]Catálogo vazio.[/red]")
+                    continue
+                repo_idx = Prompt.ask("Digite o ID do repositório")
+                if repo_idx.isdigit() and 0 <= int(repo_idx) < len(self.repos):
+                    repo_path = self.repos[int(repo_idx)]
+                    limit = Prompt.ask(
+                        "Quantos commits analisar? (0 para todos)", default="0"
+                    )
+                    changelog_command(path=repo_path, limit=int(limit))
+                else:
+                    console.print("[red]ID inválido![/red]")
+
+                Prompt.ask("\n[dim]Pressione ENTER para continuar[/dim]")
+            elif ai_choice == "4":
+                from gitauditor.commands.config_cmd import config_command
+
+                config_command()
+                Prompt.ask("\n[dim]Pressione ENTER para continuar[/dim]")
+            elif ai_choice == "5":
+                from gitauditor.commands.catalog_cmd import tag_auto_catalog
+
+                if not self.repos:
+                    console.print("[red]Catálogo vazio.[/red]")
+                    continue
+                repo_idx = Prompt.ask(
+                    "Digite o ID do repositório (ou deixe em branco para rodar em todos)",
+                    default="",
+                )
+                if repo_idx.strip() == "":
+                    tag_auto_catalog(path=None)
+                elif repo_idx.isdigit() and 0 <= int(repo_idx) < len(self.repos):
+                    tag_auto_catalog(path=self.repos[int(repo_idx)])
+                else:
+                    console.print("[red]ID inválido![/red]")
+                Prompt.ask("\n[dim]Pressione ENTER para continuar[/dim]")
+            elif ai_choice == "6":
+                from gitauditor.commands.catalog_cmd import summarize_catalog
+
+                if not self.repos:
+                    console.print("[red]Catálogo vazio.[/red]")
+                    continue
+                repo_idx = Prompt.ask(
+                    "Digite o ID do repositório (ou deixe em branco para rodar em todos)",
+                    default="",
+                )
+                if repo_idx.strip() == "":
+                    summarize_catalog(path=None)
+                elif repo_idx.isdigit() and 0 <= int(repo_idx) < len(self.repos):
+                    summarize_catalog(path=self.repos[int(repo_idx)])
+                else:
+                    console.print("[red]ID inválido![/red]")
+                Prompt.ask("\n[dim]Pressione ENTER para continuar[/dim]")
 
     def _load_catalog(self):
         from gitauditor.core.catalog import engine, init_db
