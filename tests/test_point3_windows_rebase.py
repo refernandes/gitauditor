@@ -5,7 +5,7 @@ import sys
 
 # Garante que src está no path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from src.core.git_ops import GitService
+from gitauditor.core.git_ops import GitService
 
 @pytest.fixture
 def sandbox_repo_rebase(tmp_path):

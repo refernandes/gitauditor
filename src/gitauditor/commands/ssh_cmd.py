@@ -3,7 +3,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from rich.prompt import Prompt
-from src.core.ssh_audit import IdentityManager
+from gitauditor.core.ssh_audit import IdentityManager
 
 console = Console()
 

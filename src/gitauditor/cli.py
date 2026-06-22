@@ -11,13 +11,13 @@ from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Prompt, IntPrompt
 
-from src.core.scanner import GitScanner
-from src.core.ollama_api import OllamaClient
+from gitauditor.core.scanner import GitScanner
+from gitauditor.core.ollama_api import OllamaClient
 
-from src.commands.repo_cmd import handle_repo_details
-from src.commands.amend_cmd import handle_ai_amend
-from src.commands.ssh_cmd import handle_manage_ssh
-from src.commands.audit_cmd import handle_audit_duplicates
+from gitauditor.commands.repo_cmd import handle_repo_details
+from gitauditor.commands.amend_cmd import handle_ai_amend
+from gitauditor.commands.ssh_cmd import handle_manage_ssh
+from gitauditor.commands.audit_cmd import handle_audit_duplicates
 
 console = Console()
 

@@ -6,7 +6,7 @@ import os
 from unittest.mock import AsyncMock, patch
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from src.cli import GitAuditorCLI
+from gitauditor.cli import GitAuditorCLI
 
 @pytest.mark.asyncio
 async def test_audit_all_repos_is_concurrent():
