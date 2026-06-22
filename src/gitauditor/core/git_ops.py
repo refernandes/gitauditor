@@ -212,6 +212,17 @@ with open(sys.argv[1], "w") as file:
         os.close(msg_editor_fd)
         os.close(msg_text_fd)
 
+        repo = git.Repo(path)
+        commit_obj = repo.commit(commit_hash)
+
+        # GUARDRAIL: Create a backup branch for rollback before destructive rebase
+        import datetime
+        backup_branch_name = f"gitauditor-backup-{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}-{commit_hash[:7]}"
+        try:
+            repo.create_head(backup_branch_name, "HEAD")
+        except Exception:
+            pass # Ignore if it fails, just a safety measure
+
         try:
             # 1. Script para alterar a instrução do rebase ('pick' para 'reword') no commit alvo
             with open(seq_editor_path, "w") as f:
@@ -244,10 +255,6 @@ shutil.copy("{msg_text_path}", sys.argv[1])
             env["GIT_SEQUENCE_EDITOR"] = seq_editor_path
             env["GIT_EDITOR"] = msg_editor_path
 
-            # Verifica se o commit tem pai (para lidar com o Root Commit)
-            repo = git.Repo(path)
-            commit_obj = repo.commit(commit_hash)
-
             # Inicia o rebase, usando autostash para evitar que erros de dirty-tree bloqueiem o processo
             if not commit_obj.parents:
                 subprocess.run(
@@ -273,7 +280,7 @@ shutil.copy("{msg_text_path}", sys.argv[1])
                     capture_output=True,
                 )
 
-            return True
+            return backup_branch_name
         except subprocess.CalledProcessError as e:
             subprocess.run(["git", "rebase", "--abort"], cwd=path, capture_output=True)
             raise Exception(f"Rebase failed: {e.stderr.decode()}")
@@ -284,3 +291,14 @@ shutil.copy("{msg_text_path}", sys.argv[1])
                 os.remove(msg_editor_path)
             if os.path.exists(msg_text_path):
                 os.remove(msg_text_path)
+
+    @staticmethod
+    def rollback_amend(path: str, backup_branch: str) -> bool:
+        """Restaura o histórico a partir de uma branch de backup e deleta a branch."""
+        try:
+            repo = git.Repo(path)
+            repo.git.reset("--hard", backup_branch)
+            repo.delete_head(backup_branch, force=True)
+            return True
+        except Exception as e:
+            raise Exception(f"Erro no rollback: {e}")

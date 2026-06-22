@@ -178,10 +178,24 @@ def _process_single_amend(
             with console.status(
                 "[bold yellow]Iniciando Rebase Interativo Automático..."
             ):
-                GitService.reword_commit(repo_path, commit_hash, suggestion)
+                backup_branch = GitService.reword_commit(repo_path, commit_hash, suggestion)
             console.print(
                 "[bold green]✅ Commit atualizado com sucesso via rebase![/bold green]"
             )
+            console.print(f"[dim]Backup guardado na branch: {backup_branch}[/dim]")
+            
+            if Prompt.ask("Deseja DESFAZER (Rollback) essa reescrita?", choices=["S", "N", "s", "n"], default="N").upper() == "S":
+                GitService.rollback_amend(repo_path, backup_branch)
+                console.print("[yellow]Rollback executado com sucesso! Histórico restaurado.[/yellow]")
+            else:
+                # Se aceitou, podemos limpar a branch de backup para não sujar o repo
+                import git
+                try:
+                    repo = git.Repo(repo_path)
+                    repo.delete_head(backup_branch, force=True)
+                except Exception:
+                    pass
+
         except Exception as e:
             console.print(f"[bold red]Erro ao fazer rebase:[/] {e}")
     elif confirm == "E":
@@ -189,10 +203,22 @@ def _process_single_amend(
         if edited_msg.strip():
             try:
                 with console.status("[bold yellow]Aplicando mensagem manual..."):
-                    GitService.reword_commit(repo_path, commit_hash, edited_msg)
+                    backup_branch = GitService.reword_commit(repo_path, commit_hash, edited_msg)
                 console.print(
                     "[bold green]✅ Commit atualizado com sucesso via rebase![/bold green]"
                 )
+                console.print(f"[dim]Backup guardado na branch: {backup_branch}[/dim]")
+                
+                if Prompt.ask("Deseja DESFAZER (Rollback) essa reescrita?", choices=["S", "N", "s", "n"], default="N").upper() == "S":
+                    GitService.rollback_amend(repo_path, backup_branch)
+                    console.print("[yellow]Rollback executado com sucesso! Histórico restaurado.[/yellow]")
+                else:
+                    import git
+                    try:
+                        repo = git.Repo(repo_path)
+                        repo.delete_head(backup_branch, force=True)
+                    except Exception:
+                        pass
             except Exception as e:
                 console.print(f"[bold red]Erro ao fazer rebase:[/] {e}")
     elif confirm == "C":

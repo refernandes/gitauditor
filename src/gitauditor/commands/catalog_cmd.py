@@ -143,7 +143,45 @@ def dedupe_repos(
             )
             return
 
-        # Opcional (Futuro): Perguntar qual clone manter e deletar os outros usando python shutil/rmtree
+        import shutil
+        from rich.prompt import Confirm
+        
+        for c, reps in duplicados.items():
+            console.print(f"\n[bold magenta]Resolvendo duplicação para:[/bold magenta] {c}")
+            for i, r in enumerate(reps):
+                console.print(f"[{i}] Manter: {r.path}")
+                
+            choice = typer.prompt(f"Digite o número do repositório a MANTER (os outros serão excluídos). Digite -1 para pular", type=int, default=-1)
+            if 0 <= choice < len(reps):
+                to_keep = reps[choice]
+                to_delete = [r for idx, r in enumerate(reps) if idx != choice]
+                
+                # GUARDRAIL: Lock / Dirty Check
+                safe_to_delete = []
+                for d in to_delete:
+                    import subprocess
+                    res = subprocess.run(["git", "status", "--porcelain"], cwd=d.path, capture_output=True, text=True)
+                    if res.stdout.strip() != "":
+                        console.print(f"[red]⚠️ Bloqueio de Segurança:[/red] {d.path} tem mudanças não commitadas! Abortando exclusão deste diretório.")
+                    else:
+                        safe_to_delete.append(d)
+                
+                if not safe_to_delete:
+                    continue
+                    
+                console.print("[yellow]Atenção: Os seguintes diretórios serão APAGADOS do disco:[/yellow]")
+                for d in safe_to_delete:
+                    console.print(f"- {d.path}")
+                    
+                if Confirm.ask("Tem certeza absoluta? (Não há lixeira)"):
+                    for d in safe_to_delete:
+                        try:
+                            shutil.rmtree(d.path)
+                            session.delete(d)
+                            console.print(f"[green]✅ {d.path} apagado com sucesso.[/green]")
+                        except Exception as e:
+                            console.print(f"[red]Erro ao apagar {d.path}:[/red] {e}")
+                    session.commit()
 
 
 @catalog_app.command("open")
