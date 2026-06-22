@@ -1,11 +1,9 @@
 import os
-import platform
 import asyncio
 import typer
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Prompt
 
 from gitauditor.core.scanner import GitScanner
@@ -37,8 +35,8 @@ class GitAuditorCLI:
             )
         )
 
-        # Step 1: Scan
-        self._scan_system()
+        # Step 1: Load Catalog
+        self._load_catalog()
 
         # Step 2: Main Loop
         while True:
@@ -70,44 +68,38 @@ class GitAuditorCLI:
             elif choice == "4":
                 handle_audit_duplicates(self)
             elif choice == "5":
-                self._scan_system()
+                from gitauditor.commands.catalog_cmd import sync_catalog
+
+                sync_catalog()
+                self._load_catalog()
             elif choice == "6":
                 self._action_filter_table()
 
-    def _scan_system(self):
-        if platform.system() == "Windows":
-            import string
+    def _load_catalog(self):
+        from gitauditor.core.catalog import engine, init_db
+        from gitauditor.core.models import Repo
+        from sqlmodel import Session, select
 
-            roots = [
-                f"{drive_letter}:\\"
-                for drive_letter in string.ascii_uppercase
-                if os.path.exists(f"{drive_letter}:\\")
-            ]
+        init_db()
+        with Session(engine) as session:
+            repos_db = session.exec(select(Repo)).all()
+            self.repos = [r.path for r in repos_db]
+
+            # Map existing status from DB if any
+            for r in repos_db:
+                self.repo_status[r.path] = {
+                    "icon": r.status if r.status != "Unknown" else "⚪",
+                    "reason": "Lido do catálogo",
+                }
+
+        if not self.repos:
+            console.print(
+                "\n[bold yellow]⚠️ O catálogo está vazio![/bold yellow] Rode [cyan]gitauditor catalog sync[/cyan] (Opção 5) para populá-lo."
+            )
         else:
-            roots = ["/"]
-
-        console.print(f"\n[dim]Iniciando varredura em: {roots}[/dim]")
-
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            transient=True,
-        ) as progress:
-            task = progress.add_task(
-                "[cyan]Buscando repositórios Git no sistema...", total=None
+            console.print(
+                f"\n[dim]Carregado do catálogo local: {len(self.repos)} repositórios.[/dim]"
             )
-
-            # Executa o scanner assíncrono sincronamente no CLI
-            self.repos = asyncio.run(self.scanner.scan(roots))
-
-            progress.update(
-                task, description="[cyan]Auditando acessos (Push dry-run)..."
-            )
-            asyncio.run(self._audit_all_repos())
-
-        console.print(
-            f"[bold green]✅ Varredura concluída![/bold green] {len(self.repos)} repositórios encontrados.\n"
-        )
 
     async def _audit_all_repos(self):
         self.repo_status.clear()
@@ -256,14 +248,14 @@ def main_callback(ctx: typer.Context):
 @app.command()
 def scan():
     """Realiza a varredura e exibe a tabela de repositórios."""
-    cli_state._scan_system()
+    cli_state._load_catalog()
     cli_state._show_repo_table()
 
 
 @app.command()
 def amend():
     """IA Amend (Reescrever histórico guiado por IA)."""
-    cli_state._scan_system()
+    cli_state._load_catalog()
     cli_state._show_repo_table()
     handle_ai_amend(cli_state)
 
@@ -271,7 +263,7 @@ def amend():
 @app.command()
 def audit():
     """Auditoria de Repositórios (Duplicados e Branches)."""
-    cli_state._scan_system()
+    cli_state._load_catalog()
     handle_audit_duplicates(cli_state)
 
 
@@ -284,7 +276,7 @@ def ssh():
 @app.command()
 def details():
     """Ver Detalhes de um Repositório."""
-    cli_state._scan_system()
+    cli_state._load_catalog()
     cli_state._show_repo_table()
     handle_repo_details(cli_state)
 
