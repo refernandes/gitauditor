@@ -51,17 +51,34 @@ gitauditor catalog sync
 
 # Relatórios rápidos e filtragem
 gitauditor repos list --tag work --stale
-gitauditor repos health
+gitauditor catalog health
 
 # Ações de Limpeza e Organização
-gitauditor repos dedupe --plan
+gitauditor catalog dedupe --plan
 gitauditor repos organize --root ~/Code --dry-run
 gitauditor repos prune
 
 # Agilidade e Fluxo
-gitauditor open backend-api
+gitauditor catalog open backend-api
 gitauditor worktree create api feature/teste
 ```
 
+## 5. Backlog Futuro: Phase 3 (Semantic AI Layer)
+
+A próxima grande evolução do GitAuditor foca em usar LLMs Locais (Ollama) não apenas como geradores de mensagens de commit, mas como uma **Camada Semântica Local** sobre o inventário Git.
+
+### O Novo Papel da IA
+Em vez de inferência vazia, a IA atua como uma heurística enriquecedora para as tabelas do catálogo local. Os repositórios ganharão os seguintes atributos inteligentes gerados em background:
+- `ai_summary`: Resumo curto do propósito do projeto.
+- `ai_stack`: Tecnologias detectadas (Python, React, Docker, etc).
+- `ai_tags`: Categorização automática (`work`, `study`, `lab`, `archive`, `infra`, `api`).
+- `ai_risk`: Risco estimado e nível de atividade (abandono, experimental, prod).
+
+### Features Estratégicas P3
+1. **Catalog Summarize:** `gitauditor catalog summarize` lê árvores de diretórios (usando técnicas de empacotamento leve como `repomix --no-files`) e gera os resumos de cada repo não-mapeado do catálogo.
+2. **Auto-Tagging:** `gitauditor catalog tag --auto` propõe categorias baseadas em heurísticas e na arquitetura de pastas.
+3. **Local Review:** `gitauditor repo review` revisa o `diff` local ou staged, apontando *code smells* e riscos de arquitetura antes do `push`.
+4. **Readme Draft:** `gitauditor repo readme-draft` lê a estrutura do código e os históricos e rascunha documentação para projetos esquecidos.
+
 ---
-*Status: Aprovado para início do desenvolvimento P0.*
+*Status: P0, P1, P2 Concluídos com sucesso na Versão 3. Iniciando desenho arquitetural da Fase P3 (Semantic Layer).*
