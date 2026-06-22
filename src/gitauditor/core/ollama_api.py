@@ -66,3 +66,42 @@ class OllamaClient:
                     return f"Erro Ollama: Status {response.status_code}"
         except Exception as e:
             return f"Erro Ollama/HTTP: {repr(e)}"
+
+    async def analyze_repo_semantics(self, context_str: str) -> Optional[dict]:
+        """
+        P3: Faz análise estruturada de um repositório forçando a resposta JSON
+        usando o Schema do Pydantic no parâmetro format.
+        """
+        from gitauditor.core.semantic import RepoSummarySchema
+
+        prompt = (
+            "You are an expert software architect analyzing a repository structure.\n"
+            "Based on the following repository context (file tree, manifests, and README), "
+            "generate a concise JSON summary adhering strictly to the provided JSON schema.\n\n"
+            f"CONTEXT:\n{context_str}\n"
+        )
+
+        try:
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                response = await client.post(
+                    f"{self.base_url}/api/generate",
+                    json={
+                        "model": self.model,
+                        "prompt": prompt,
+                        "stream": False,
+                        "format": RepoSummarySchema.model_json_schema(),
+                    },
+                )
+
+                if response.status_code == 200:
+                    data = response.json()
+                    raw_json = data.get("response", "{}").strip()
+                    try:
+                        # Validate and parse directly
+                        return json.loads(raw_json)
+                    except Exception:
+                        return None
+                else:
+                    return None
+        except Exception:
+            return None

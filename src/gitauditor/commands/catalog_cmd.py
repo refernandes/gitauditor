@@ -190,3 +190,88 @@ def open_repo(query: str):
             os.system(f'code "{target}" || open "{target}"')
         else:
             os.system(f'code "{target}" || xdg-open "{target}"')
+
+
+@app.command("summarize")
+def summarize_catalog(
+    path: str = typer.Option(None, help="Filtrar por nome do repositório"),
+    force: bool = typer.Option(
+        False, "--force", help="Ignorar o cache de hash e forçar nova análise"
+    ),
+):
+    """
+    [P3] Analisa a árvore de pastas e manifestos para gerar metadados semânticos via IA.
+    """
+    import asyncio
+    from gitauditor.core.catalog import engine, init_db
+    from gitauditor.core.models import Repo
+    from sqlmodel import Session, select
+    from gitauditor.core.semantic import extract_repo_context
+    from gitauditor.core.ollama_api import OllamaClient
+    from datetime import datetime
+
+    init_db()
+    client = OllamaClient()
+
+    with Session(engine) as session:
+        query = select(Repo)
+        if path:
+            query = query.where(Repo.path.contains(path))
+
+        repos = session.exec(query).all()
+        if not repos:
+            console.print("[red]Nenhum repositório encontrado.[/red]")
+            raise typer.Exit(1)
+
+        console.print(
+            f"[bold cyan]Processando análise semântica em {len(repos)} repositórios...[/bold cyan]"
+        )
+
+        async def analyze_all():
+            for repo in repos:
+                console.print(f"\n[bold yellow]Analisando:[/bold yellow] {repo.name}")
+                context = extract_repo_context(repo.path)
+                current_hash = context["source_hash"]
+
+                if current_hash == "none":
+                    console.print("[dim]Pasta não existe mais. Pulando.[/dim]")
+                    continue
+
+                if not force and repo.ai_source_hash == current_hash:
+                    console.print("[green]✓ Cache válido. Hash não mudou.[/green]")
+                    continue
+
+                console.print(f"[dim]Construindo contexto e chamando Ollama...[/dim]")
+
+                ctx_str = f"TREE:\n{context['tree']}\n\nMANIFESTS:\n{context['manifests']}\n\nREADME:\n{context['readme']}"
+                result = await client.analyze_repo_semantics(ctx_str)
+
+                if result:
+                    repo.ai_summary = result.get("summary")
+                    repo.ai_stack = result.get("stack")
+                    repo.ai_tags = (
+                        ",".join(result.get("tags", []))
+                        if isinstance(result.get("tags"), list)
+                        else result.get("tags", "")
+                    )
+                    repo.ai_risk = result.get("risk")
+
+                    # Governance
+                    repo.ai_model = client.model
+                    repo.ai_source_hash = current_hash
+                    repo.ai_updated_at = datetime.utcnow()
+
+                    session.add(repo)
+                    session.commit()
+
+                    console.print(
+                        f"[green]✓ Atualizado![/green] Stack: [cyan]{repo.ai_stack}[/cyan]"
+                    )
+                    console.print(f"  [dim]Tags: {repo.ai_tags}[/dim]")
+                    console.print(f"  [dim]Resumo: {repo.ai_summary}[/dim]")
+                else:
+                    console.print(
+                        "[red]✗ Falha ao processar a resposta estruturada do LLM.[/red]"
+                    )
+
+        asyncio.run(analyze_all())
