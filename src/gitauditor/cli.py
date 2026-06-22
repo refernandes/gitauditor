@@ -1,6 +1,7 @@
 import os
 import platform
 import asyncio
+import typer
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
@@ -238,6 +239,51 @@ class GitAuditorCLI:
             self.current_filter = "Apenas Locais"
 
 
+app = typer.Typer(help="GitAuditor CLI - IA Manager", invoke_without_command=True)
+cli_state = GitAuditorCLI()
+
+
+@app.callback()
+def main_callback(ctx: typer.Context):
+    if ctx.invoked_subcommand is None:
+        cli_state.run()
+
+
+@app.command()
+def scan():
+    """Realiza a varredura e exibe a tabela de repositórios."""
+    cli_state._scan_system()
+    cli_state._show_repo_table()
+
+
+@app.command()
+def amend():
+    """IA Amend (Reescrever histórico guiado por IA)."""
+    cli_state._scan_system()
+    cli_state._show_repo_table()
+    handle_ai_amend(cli_state)
+
+
+@app.command()
+def audit():
+    """Auditoria de Repositórios (Duplicados e Branches)."""
+    cli_state._scan_system()
+    handle_audit_duplicates(cli_state)
+
+
+@app.command()
+def ssh():
+    """Gerenciar Chaves e Identidades SSH."""
+    handle_manage_ssh(cli_state)
+
+
+@app.command()
+def details():
+    """Ver Detalhes de um Repositório."""
+    cli_state._scan_system()
+    cli_state._show_repo_table()
+    handle_repo_details(cli_state)
+
+
 if __name__ == "__main__":
-    cli = GitAuditorCLI()
-    cli.run()
+    app()

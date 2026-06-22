@@ -1,9 +1,8 @@
-from gitauditor.cli import GitAuditorCLI
+from gitauditor.cli import app
 
 
 def main():
-    cli = GitAuditorCLI()
-    cli.run()
+    app()
 
 
 if __name__ == "__main__":
