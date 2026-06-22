@@ -3,6 +3,7 @@ import httpx
 from typing import Optional
 from tenacity import retry, stop_after_attempt, wait_exponential
 from gitauditor.core.config import ConfigManager
+from gitauditor.core.audit_log import AuditLogger
 
 
 class AIClient:
@@ -118,6 +119,17 @@ class AIClient:
             "properties": {"suggested_message": {"type": "string"}},
         }
         res = await self._generate_structured(prompt, schema, timeout=30.0)
+        
+        status = "SUCCESS" if res else "ERROR"
+        AuditLogger.log(
+            command="ai_amend",
+            status=status,
+            summary="Gerou nova mensagem de commit com base no diff.",
+            ai_provider=self.provider,
+            ai_model=self.model,
+            details=json.dumps(res) if res else "RetryError or Invalid Response"
+        )
+        
         return res.get("suggested_message") if res else None
 
     async def analyze_repo_semantics(self, context_str: str) -> Optional[dict]:
@@ -129,9 +141,19 @@ class AIClient:
             "the tech stack list, suggested tags, and the risk/activity level.\n\n"
             f"CONTEXT:\n{context_str}\n"
         )
-        return await self._generate_structured(
+        res = await self._generate_structured(
             prompt, RepoSummarySchema.model_json_schema()
         )
+        
+        status = "SUCCESS" if res else "ERROR"
+        AuditLogger.log(
+            command="ai_summarize",
+            status=status,
+            summary="Resumiu arquitetura do repositório.",
+            ai_provider=self.provider,
+            ai_model=self.model,
+        )
+        return res
 
     async def refine_repo_tags(
         self, context_str: str, heuristic_tags: list[str]
@@ -145,6 +167,15 @@ class AIClient:
             f"CONTEXT:\n{context_str}\n"
         )
         res = await self._generate_structured(prompt, RepoTagSchema.model_json_schema())
+        
+        status = "SUCCESS" if res else "ERROR"
+        AuditLogger.log(
+            command="ai_tagging",
+            status=status,
+            summary="Refinou tags heurísticas com IA.",
+            ai_provider=self.provider,
+            ai_model=self.model,
+        )
         return res.get("tags", heuristic_tags) if res else heuristic_tags
 
     async def analyze_local_diff(self, diff_content: str) -> Optional[dict]:
@@ -156,9 +187,19 @@ class AIClient:
             "Do NOT focus on secrets.\n\n"
             f"DIFF:\n{diff_content}\n"
         )
-        return await self._generate_structured(
+        res = await self._generate_structured(
             prompt, RepoReviewSchema.model_json_schema()
         )
+        
+        status = "SUCCESS" if res else "ERROR"
+        AuditLogger.log(
+            command="ai_review",
+            status=status,
+            summary="Realizou code review no diff atual.",
+            ai_provider=self.provider,
+            ai_model=self.model,
+        )
+        return res
 
     async def generate_changelog(self, commits_log: str) -> Optional[dict]:
         from gitauditor.core.semantic import RepoChangelogSchema
@@ -169,6 +210,16 @@ class AIClient:
             "Group the information into features, fixes, and breaking changes. Summarize the overall evolution.\n\n"
             f"COMMITS LOG:\n{commits_log}\n"
         )
-        return await self._generate_structured(
+        res = await self._generate_structured(
             prompt, RepoChangelogSchema.model_json_schema()
         )
+        
+        status = "SUCCESS" if res else "ERROR"
+        AuditLogger.log(
+            command="ai_changelog",
+            status=status,
+            summary="Gerou changelog a partir dos commits.",
+            ai_provider=self.provider,
+            ai_model=self.model,
+        )
+        return res

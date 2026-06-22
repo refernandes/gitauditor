@@ -469,5 +469,37 @@ def details():
     handle_repo_details(cli_state)
 
 
+@app.command()
+def history(limit: int = 20):
+    """Exibe o histórico de auditoria local (comandos executados e IA)."""
+    from gitauditor.core.audit_log import audit_engine, AuditRecord, init_audit_db
+    from sqlmodel import Session, select
+    from rich.table import Table
+
+    init_audit_db()
+    with Session(audit_engine) as session:
+        records = session.exec(select(AuditRecord).order_by(AuditRecord.id.desc()).limit(limit)).all()
+
+    if not records:
+        console.print("[yellow]Nenhum registro de auditoria encontrado.[/yellow]")
+        return
+
+    table = Table(title=f"Histórico de Auditoria (Últimos {limit})", show_header=True, header_style="bold magenta")
+    table.add_column("Data", style="dim", width=16)
+    table.add_column("Comando", style="cyan")
+    table.add_column("Status", justify="center")
+    table.add_column("Resumo", style="white")
+    table.add_column("IA", style="dim")
+
+    for r in records:
+        dt = r.timestamp.strftime("%Y-%m-%d %H:%M")
+        status_color = "green" if r.status == "SUCCESS" else "red" if r.status == "ERROR" else "yellow"
+        st = f"[{status_color}]{r.status}[/{status_color}]"
+        ai_info = f"{r.ai_provider}/{r.ai_model}" if r.ai_provider else "-"
+        table.add_row(dt, r.command, st, r.summary, ai_info)
+
+    console.print(table)
+
+
 if __name__ == "__main__":
     app()
