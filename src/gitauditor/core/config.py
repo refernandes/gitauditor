@@ -21,7 +21,7 @@ class ConfigManager:
     @staticmethod
     def load_config() -> dict:
         if not os.path.exists(CONFIG_DIR):
-            os.makedirs(CONFIG_DIR)
+            os.makedirs(CONFIG_DIR, mode=0o700, exist_ok=True)
 
         if not os.path.exists(CONFIG_FILE):
             config = ConfigManager.get_default_config()
@@ -37,6 +37,14 @@ class ConfigManager:
     @staticmethod
     def save_config(config: dict):
         if not os.path.exists(CONFIG_DIR):
-            os.makedirs(CONFIG_DIR)
+            os.makedirs(CONFIG_DIR, mode=0o700, exist_ok=True)
         with open(CONFIG_FILE, "w", encoding="utf-8") as f:
             json.dump(config, f, indent=4)
+        
+        # Security: ensure config.json is only readable/writable by the owner
+        # since it stores sensitive API keys
+        if hasattr(os, "chmod"):
+            try:
+                os.chmod(CONFIG_FILE, 0o600)
+            except Exception:
+                pass

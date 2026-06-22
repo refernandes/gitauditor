@@ -45,6 +45,8 @@ class AIClient:
                     )
                     if response.status_code == 200:
                         raw = response.json().get("response", "{}").strip()
+                        raw = raw.removeprefix("```json").removesuffix("```").strip()
+                        raw = raw.removeprefix("```").strip()
                         return json.loads(raw)
 
                 else:
@@ -83,6 +85,8 @@ class AIClient:
                     if response.status_code == 200:
                         data = response.json()
                         raw = data["choices"][0]["message"]["content"].strip()
+                        raw = raw.removeprefix("```json").removesuffix("```").strip()
+                        raw = raw.removeprefix("```").strip()
                         return json.loads(raw)
                     else:
                         print(f"Erro API: {response.status_code} - {response.text}")
