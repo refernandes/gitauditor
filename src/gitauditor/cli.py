@@ -29,6 +29,8 @@ class GitAuditorCLI:
         self.repos = []
         self.repo_status = {}
         self.current_filter = "Todos"
+        self.current_page = 0
+        self.page_size = 15
 
     def run(self):
         console.clear()
@@ -44,7 +46,7 @@ class GitAuditorCLI:
 
         # Step 2: Main Loop
         while True:
-            self._show_repo_table()
+            total_filtered = self._show_repo_table()
 
             console.print("\n[bold yellow]Menu Principal:[/bold yellow]")
             console.print("[1] 🔍 Ver Detalhes de um Repositório")
@@ -59,14 +61,29 @@ class GitAuditorCLI:
                 f"[9] 🏷️  Filtrar Tabela (Atual: [bold green]{self.current_filter}[/bold green])"
             )
             console.print("[0] 🚪 Sair")
+            
+            total_pages = (total_filtered + self.page_size - 1) // self.page_size if total_filtered > 0 else 1
+            if total_pages > 1:
+                console.print(f"[dim]Página {self.current_page + 1}/{total_pages} - Digite 'n' para próxima, 'p' para anterior[/dim]")
 
+            choices = [str(i) for i in range(10)] + ["n", "N", "p", "P"]
             choice = Prompt.ask(
-                "Escolha uma opção", choices=[str(i) for i in range(10)]
-            )
+                "Escolha uma opção", choices=choices
+            ).lower()
 
             if choice == "0":
                 console.print("[bold green]Até logo![/bold green] 👋")
                 break
+            elif choice == "n":
+                if self.current_page < total_pages - 1:
+                    self.current_page += 1
+                else:
+                    self.current_page = 0
+            elif choice == "p":
+                if self.current_page > 0:
+                    self.current_page -= 1
+                else:
+                    self.current_page = total_pages - 1
             elif choice == "1":
                 handle_repo_details(self)
             elif choice == "2":
@@ -316,10 +333,10 @@ class GitAuditorCLI:
         if tasks:
             await asyncio.gather(*tasks)
 
-    def _show_repo_table(self):
+    def _show_repo_table(self) -> int:
         if not self.repos:
             console.print("[yellow]Nenhum repositório para exibir.[/yellow]")
-            return
+            return 0
 
         table = Table(
             title="Repositórios Encontrados",
@@ -332,37 +349,51 @@ class GitAuditorCLI:
         table.add_column("Status Push", justify="center")
         table.add_column("Motivo / Log", style="dim")
 
-        displayed = 0
+        # Primeiro filtramos todos
+        filtered_repos = []
         for idx, repo_path in enumerate(self.repos):
-            name = os.path.basename(repo_path)
-
             status_obj = self.repo_status.get(repo_path, {"icon": "⚪", "reason": ""})
-            if isinstance(status_obj, str):  # Backward compatibility just in case
-                icon = status_obj
-                reason = ""
-            else:
-                icon = status_obj["icon"]
-                reason = status_obj["reason"]
-
-            # Filter logic
+            icon = status_obj if isinstance(status_obj, str) else status_obj["icon"]
+            
             if self.current_filter == "Apenas OK" and "🟢" not in icon:
                 continue
             if self.current_filter == "Apenas Negados" and "🔴" not in icon:
                 continue
             if self.current_filter == "Apenas Locais" and "📁" not in icon:
                 continue
+            filtered_repos.append((idx, repo_path, status_obj))
 
-            # Truncate reason
+        total_filtered = len(filtered_repos)
+        
+        # Adjust page if out of bounds
+        max_page = max(0, (total_filtered - 1) // self.page_size)
+        if self.current_page > max_page:
+            self.current_page = max_page
+
+        start_idx = self.current_page * self.page_size
+        end_idx = start_idx + self.page_size
+        paged_repos = filtered_repos[start_idx:end_idx]
+
+        for original_idx, repo_path, status_obj in paged_repos:
+            name = os.path.basename(repo_path)
+            if isinstance(status_obj, str):
+                icon = status_obj
+                reason = ""
+            else:
+                icon = status_obj["icon"]
+                reason = status_obj["reason"]
+
             display_reason = reason[:35] + "..." if len(reason) > 35 else reason
-            table.add_row(str(idx), name, repo_path, icon, display_reason)
-            displayed += 1
+            table.add_row(str(original_idx), name, repo_path, icon, display_reason)
 
-        if displayed > 0:
+        if total_filtered > 0:
             console.print(table)
         else:
             console.print(
                 f"[yellow]Nenhum repositório corresponde ao filtro: {self.current_filter}[/yellow]"
             )
+            
+        return total_filtered
 
     def _action_filter_table(self):
         console.print("\n[bold cyan]Opções de Filtro:[/bold cyan]")
@@ -382,6 +413,7 @@ class GitAuditorCLI:
             self.current_filter = "Apenas Negados"
         elif choice == "4":
             self.current_filter = "Apenas Locais"
+        self.current_page = 0
 
 
 app = typer.Typer(help="GitAuditor CLI - IA Manager", invoke_without_command=True)

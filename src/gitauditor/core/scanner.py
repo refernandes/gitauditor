@@ -42,6 +42,7 @@ class GitScanner:
         self.found_repos = []
         self.is_scanning = False
         self.callback = callback  # Função chamada a cada repo encontrado
+        self.semaphore = asyncio.Semaphore(4)  # Limite de 4 raízes concorrentes
 
     async def scan(self, root_dirs: List[str]) -> List[str]:
         """Inicia a varredura assíncrona nos diretórios raiz fornecidos."""
@@ -56,16 +57,17 @@ class GitScanner:
         return self.found_repos
 
     async def _scan_dir(self, directory: str):
-        """Varre um diretório recursivamente de forma assíncrona."""
+        """Varre um diretório recursivamente de forma assíncrona com controle de concorrência."""
         if not os.path.exists(directory):
             return
 
-        try:
-            # Usamos to_thread para não travar o loop de eventos com I/O de disco
-            await asyncio.to_thread(self._sync_walk, directory)
-        except Exception:
-            # Ignora erros de permissão ou pastas inacessíveis
-            pass
+        async with self.semaphore:
+            try:
+                # Usamos to_thread para não travar o loop de eventos com I/O de disco
+                await asyncio.to_thread(self._sync_walk, directory)
+            except Exception:
+                # Ignora erros de permissão ou pastas inacessíveis
+                pass
 
     def _sync_walk(self, directory: str):
         """Executa o walk de forma síncrona dentro de uma thread separada."""

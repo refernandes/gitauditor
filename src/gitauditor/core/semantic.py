@@ -158,8 +158,9 @@ def extract_repo_context(repo_path: str) -> Dict[str, str]:
 
     tree_str = "\n".join(tree_lines)
 
+    import json
     # Generate Invalidation Hash
-    hash_input = tree_str + readme_content + str(manifests_content)
+    hash_input = tree_str + readme_content + json.dumps(manifests_content, sort_keys=True)
     source_hash = hashlib.sha256(hash_input.encode("utf-8")).hexdigest()
 
     return {

@@ -15,6 +15,22 @@ engine = create_engine(sqlite_url)
 
 def init_db():
     SQLModel.metadata.create_all(engine)
+    
+    # Heurística simples de Migration:
+    # Se uma nova versão adicionou colunas que não existem, o select vai falhar.
+    # Como o banco é de cache efêmero, fazemos um Drop & Recreate para evitar crashs.
+    from sqlmodel import Session, select
+    from gitauditor.core.models import Repo
+    from sqlalchemy.exc import OperationalError
+
+    try:
+        with Session(engine) as session:
+            session.exec(select(Repo).limit(1)).first()
+    except OperationalError as e:
+        if "no such column" in str(e).lower() or "table" in str(e).lower():
+            # Schema mudou, refaz o cache do zero
+            SQLModel.metadata.drop_all(engine)
+            SQLModel.metadata.create_all(engine)
 
 
 def get_session():
