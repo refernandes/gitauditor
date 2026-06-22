@@ -97,7 +97,6 @@ class OllamaClient:
                     data = response.json()
                     raw_json = data.get("response", "{}").strip()
                     try:
-                        # Validate and parse directly
                         return json.loads(raw_json)
                     except Exception:
                         return None
@@ -105,3 +104,44 @@ class OllamaClient:
                     return None
         except Exception:
             return None
+
+    async def refine_repo_tags(
+        self, context_str: str, heuristic_tags: list[str]
+    ) -> Optional[list[str]]:
+        """
+        P3.2: Refine base deterministic tags using the LLM.
+        """
+        from gitauditor.core.semantic import RepoTagSchema
+
+        prompt = (
+            "You are an expert software architect analyzing a repository.\n"
+            f"A deterministic scanner suggested these base tags for the project: {heuristic_tags}\n"
+            "Based on the repository context below, refine or add new tags that represent the main stack, purpose, and category of this project.\n"
+            "Return a JSON adhering strictly to the provided JSON schema.\n\n"
+            f"CONTEXT:\n{context_str}\n"
+        )
+
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.post(
+                    f"{self.base_url}/api/generate",
+                    json={
+                        "model": self.model,
+                        "prompt": prompt,
+                        "stream": False,
+                        "format": RepoTagSchema.model_json_schema(),
+                    },
+                )
+
+                if response.status_code == 200:
+                    data = response.json()
+                    raw_json = data.get("response", "{}").strip()
+                    try:
+                        parsed = json.loads(raw_json)
+                        return parsed.get("tags", heuristic_tags)
+                    except Exception:
+                        return heuristic_tags
+                else:
+                    return heuristic_tags
+        except Exception:
+            return heuristic_tags

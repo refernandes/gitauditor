@@ -58,6 +58,16 @@ class RepoSummarySchema(BaseModel):
     )
 
 
+class RepoTagSchema(BaseModel):
+    """
+    P3.2: Schema for refining tags via LLM
+    """
+
+    tags: list[str] = Field(
+        description="List of 2 to 5 refined tags describing the project category and architecture."
+    )
+
+
 # ---------------------------------------------------------
 # P3.1: Hierarchical Context Extractor & Hashing
 # ---------------------------------------------------------

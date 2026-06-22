@@ -192,7 +192,7 @@ def open_repo(query: str):
             os.system(f'code "{target}" || xdg-open "{target}"')
 
 
-@app.command("summarize")
+@catalog_app.command("summarize")
 def summarize_catalog(
     path: str = typer.Option(None, help="Filtrar por nome do repositório"),
     force: bool = typer.Option(
@@ -275,3 +275,70 @@ def summarize_catalog(
                     )
 
         asyncio.run(analyze_all())
+
+
+@catalog_app.command("tag-auto")
+def tag_auto_catalog(
+    path: str = typer.Option(None, help="Filtrar por nome do repositório"),
+    no_ai: bool = typer.Option(
+        False, "--no-ai", help="Usar apenas heurística bruta (sem Ollama)"
+    ),
+):
+    """
+    [P3.2] Híbrido: Gera e aplica tags automaticamente (Heurística determinística + LLM).
+    """
+    import asyncio
+    from gitauditor.core.catalog import engine, init_db
+    from gitauditor.core.models import Repo
+    from sqlmodel import Session, select
+    from gitauditor.core.heuristics import generate_heuristic_tags
+    from gitauditor.core.semantic import extract_repo_context
+    from gitauditor.core.ollama_api import OllamaClient
+
+    init_db()
+    client = OllamaClient()
+
+    with Session(engine) as session:
+        query = select(Repo)
+        if path:
+            query = query.where(Repo.path.contains(path))
+
+        repos = session.exec(query).all()
+        if not repos:
+            console.print("[red]Nenhum repositório encontrado.[/red]")
+            raise typer.Exit(1)
+
+        console.print(
+            f"[bold cyan]Processando auto-tagging em {len(repos)} repositórios...[/bold cyan]"
+        )
+
+        async def tag_all():
+            for repo in repos:
+                console.print(f"\n[bold yellow]Analisando:[/bold yellow] {repo.name}")
+
+                # 1. Fallback Determinístico (Heuristics)
+                h_tags = generate_heuristic_tags(repo.path)
+                console.print(f"  [dim]Heurística base detectada:[/dim] {h_tags}")
+
+                final_tags = h_tags
+
+                # 2. LLM Enrichment (se permitido)
+                if not no_ai:
+                    context = extract_repo_context(repo.path)
+                    if context["source_hash"] != "none":
+                        ctx_str = f"TREE:\n{context['tree']}\nMANIFESTS:\n{context['manifests']}\nREADME:\n{context['readme']}"
+                        refined = await client.refine_repo_tags(ctx_str, h_tags)
+                        if refined:
+                            final_tags = refined
+
+                # Update DB
+                tag_str = ",".join(final_tags)
+                repo.tags = tag_str
+                session.add(repo)
+                session.commit()
+
+                console.print(
+                    f"  [green]✓ Tags aplicadas:[/green] [bold cyan]{tag_str}[/bold cyan]"
+                )
+
+        asyncio.run(tag_all())
