@@ -9,6 +9,9 @@ class Repo(SQLModel, table=True):
     name: str = Field(index=True)
     host: Optional[str] = Field(default=None, index=True)  # Ex: github.com, gitlab.com
     owner: Optional[str] = Field(default=None, index=True)  # Ex: refernandes
+    canonical_name: Optional[str] = Field(
+        default=None, index=True
+    )  # Ex: github.com/refernandes/gitauditor
 
     # Metadados enriquecidos
     tags: Optional[str] = Field(default="")  # Separados por vírgula ou JSON string
