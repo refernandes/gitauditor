@@ -15,8 +15,9 @@ venv.bak/
 .pytest_cache/
 tests/repo/
 tests/repo_windows/
-~/.gitauditor_ai_cache.json
-*.json
+.gitauditor_ai_cache.json
+.coverage
+htmlcov/
 
 # IDEs and Editors
 .vscode/
