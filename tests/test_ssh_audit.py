@@ -58,9 +58,10 @@ def test_set_repo_identity(mocker, tmp_git_repo):
 
 @pytest.mark.asyncio
 async def test_test_provider_connection_success(mocker):
+    from unittest.mock import AsyncMock
     mock_create_subprocess_exec = mocker.patch("asyncio.create_subprocess_exec")
     mock_process = MagicMock()
-    mock_process.communicate.return_value = (b"", b"successfully authenticated")
+    mock_process.communicate = AsyncMock(return_value=(b"", b"successfully authenticated"))
     mock_create_subprocess_exec.return_value = mock_process
     
     result = await IdentityManager.test_provider_connection("github.com")
@@ -69,9 +70,10 @@ async def test_test_provider_connection_success(mocker):
 
 @pytest.mark.asyncio
 async def test_test_provider_connection_failure(mocker):
+    from unittest.mock import AsyncMock
     mock_create_subprocess_exec = mocker.patch("asyncio.create_subprocess_exec")
     mock_process = MagicMock()
-    mock_process.communicate.return_value = (b"", b"Permission denied")
+    mock_process.communicate = AsyncMock(return_value=(b"", b"Permission denied"))
     mock_create_subprocess_exec.return_value = mock_process
     
     result = await IdentityManager.test_provider_connection("github.com")
