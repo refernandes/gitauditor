@@ -1,5 +1,7 @@
 # GitAuditor 🤖
 
+[![CI](https://github.com/refernandes/gitauditor/actions/workflows/ci.yml/badge.svg)](https://github.com/refernandes/gitauditor/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/refernandes/gitauditor/graph/badge.svg?token=YOUR_TOKEN_HERE)](https://codecov.io/gh/refernandes/gitauditor)
 *[Leia esta documentação em Português / Read this in Portuguese](README_pt.md)*
 
 **GitAuditor** has evolved from a simple local script into an **AI-powered Intelligent Code Infrastructure Catalog**.
