@@ -114,10 +114,7 @@ class IdentityManager:
             output = stderr.decode() + stdout.decode()
 
             # Github e Gitlab retornam mensagens de boas vindas no stderr
-            if (
-                "successfully authenticated" in output.lower()
-                or "welcome" in output.lower()
-            ):
+            if "successfully authenticated" in output.lower() or "welcome" in output.lower():
                 return True
             return False
         except Exception:

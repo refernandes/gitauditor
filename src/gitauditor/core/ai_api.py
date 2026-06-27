@@ -5,6 +5,7 @@ Provides a unified interface (AIClient) to communicate with different LLM
 providers (OpenAI, OpenRouter, Azure, Ollama) and enforces structured JSON
 outputs for semantic analysis tasks.
 """
+
 import json
 
 import httpx
@@ -19,10 +20,11 @@ from gitauditor.core.exceptions import AIProviderError
 class AIClient:
     """
     Unified client for interacting with AI models across different providers.
-    
+
     Handles configuration, retries, timeouts, and structured JSON parsing.
     Supports local (Ollama) and cloud (OpenAI, OpenRouter, Azure) endpoints.
     """
+
     def __init__(self):
         config = ConfigManager.load_config()
         self.ai_config = config.get("ai", {})
@@ -36,18 +38,20 @@ class AIClient:
         elif self.provider == "openai":
             self.base_url = self.ai_config.get("base_url", "https://api.openai.com/v1")
         elif self.provider == "openrouter":
-            self.base_url = self.ai_config.get(
-                "base_url", "https://openrouter.ai/api/v1"
-            )
+            self.base_url = self.ai_config.get("base_url", "https://openrouter.ai/api/v1")
         elif self.provider == "azure":
-            self.base_url = self.ai_config.get("base_url", "https://<your-resource>.services.ai.azure.com/openai/v1")
+            self.base_url = self.ai_config.get(
+                "base_url", "https://<your-resource>.services.ai.azure.com/openai/v1"
+            )
         else:
             self.base_url = self.ai_config.get("base_url", "")
 
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
-        retry_error_callback=lambda s: print(f"\n[bold red]Erro do LLM:[/bold red] {s.outcome.exception()}") or None
+        retry_error_callback=lambda s: (
+            print(f"\n[bold red]Erro do LLM:[/bold red] {s.outcome.exception()}") or None
+        ),
     )
     async def _generate_structured(
         self, prompt: str, schema_dict: dict, timeout: float = 120.0
@@ -57,81 +61,82 @@ class AIClient:
         Retries up to 3 times on failure.
         """
         async with httpx.AsyncClient(timeout=timeout) as client:
-                if self.provider == "ollama":
-                    # Ollama direct generate endpoint
-                    response = await client.post(
-                        f"{self.base_url}/api/generate",
-                        json={
-                            "model": self.model,
-                            "prompt": prompt,
-                            "stream": False,
-                            "format": schema_dict,
-                        },
-                    )
-                    if response.status_code == 200:
-                        raw = response.json().get("response", "{}").strip()
-                        raw = raw.removeprefix("```json").removesuffix("```").strip()
-                        raw = raw.removeprefix("```").strip()
-                        return json.loads(raw)
-                    if response.status_code != 200:
-                        raise AIProviderError(f"Ollama API Error: {response.status_code} - {response.text}")
-
-                else:
-                    # OpenAI / OpenRouter / Azure Chat Completions API
-                    headers = {
-                        "Content-Type": "application/json",
-                    }
-
-                    if self.provider == "azure" and self.api_key == "azure_default_credential":
-                        from azure.identity import DefaultAzureCredential
-                        credential = DefaultAzureCredential()
-                        token = credential.get_token("https://ai.azure.com/.default").token
-                        headers["Authorization"] = f"Bearer {token}"
-                    else:
-                        headers["Authorization"] = f"Bearer {self.api_key}"
-                    if self.provider == "openrouter":
-                        headers["HTTP-Referer"] = "https://github.com/gitauditor"
-                        headers["X-Title"] = "GitAuditor"
-
-                    # Appending schema to prompt to enforce JSON shape
-                    # (since some OpenRouter models don't support response_format strict)
-                    system_msg = (
-                        "You must respond ONLY with a valid JSON object matching this schema:\n"
-                        f"{json.dumps(schema_dict)}\n"
-                        "Do not include markdown blocks or any other text."
-                    )
-
-                    payload = {
+            if self.provider == "ollama":
+                # Ollama direct generate endpoint
+                response = await client.post(
+                    f"{self.base_url}/api/generate",
+                    json={
                         "model": self.model,
-                        "messages": [
-                            {"role": "system", "content": system_msg},
-                            {"role": "user", "content": prompt},
-                        ],
-                        "response_format": {"type": "json_object"},
-                    }
-
-                    response = await client.post(
-                        f"{self.base_url}/chat/completions",
-                        headers=headers,
-                        json=payload,
+                        "prompt": prompt,
+                        "stream": False,
+                        "format": schema_dict,
+                    },
+                )
+                if response.status_code == 200:
+                    raw = response.json().get("response", "{}").strip()
+                    raw = raw.removeprefix("```json").removesuffix("```").strip()
+                    raw = raw.removeprefix("```").strip()
+                    return json.loads(raw)
+                if response.status_code != 200:
+                    raise AIProviderError(
+                        f"Ollama API Error: {response.status_code} - {response.text}"
                     )
 
-                    if response.status_code == 200:
-                        data = response.json()
-                        raw = data["choices"][0]["message"]["content"].strip()
-                        raw = raw.removeprefix("```json").removesuffix("```").strip()
-                        raw = raw.removeprefix("```").strip()
-                        return json.loads(raw)
-                    if response.status_code != 200:
-                        raise AIProviderError(f"API Error: {response.status_code} - {response.text}")
+            else:
+                # OpenAI / OpenRouter / Azure Chat Completions API
+                headers = {
+                    "Content-Type": "application/json",
+                }
+
+                if self.provider == "azure" and self.api_key == "azure_default_credential":
+                    from azure.identity import DefaultAzureCredential
+
+                    credential = DefaultAzureCredential()
+                    token = credential.get_token("https://ai.azure.com/.default").token
+                    headers["Authorization"] = f"Bearer {token}"
+                else:
+                    headers["Authorization"] = f"Bearer {self.api_key}"
+                if self.provider == "openrouter":
+                    headers["HTTP-Referer"] = "https://github.com/gitauditor"
+                    headers["X-Title"] = "GitAuditor"
+
+                # Appending schema to prompt to enforce JSON shape
+                # (since some OpenRouter models don't support response_format strict)
+                system_msg = (
+                    "You must respond ONLY with a valid JSON object matching this schema:\n"
+                    f"{json.dumps(schema_dict)}\n"
+                    "Do not include markdown blocks or any other text."
+                )
+
+                payload = {
+                    "model": self.model,
+                    "messages": [
+                        {"role": "system", "content": system_msg},
+                        {"role": "user", "content": prompt},
+                    ],
+                    "response_format": {"type": "json_object"},
+                }
+
+                response = await client.post(
+                    f"{self.base_url}/chat/completions",
+                    headers=headers,
+                    json=payload,
+                )
+
+                if response.status_code == 200:
+                    data = response.json()
+                    raw = data["choices"][0]["message"]["content"].strip()
+                    raw = raw.removeprefix("```json").removesuffix("```").strip()
+                    raw = raw.removeprefix("```").strip()
+                    return json.loads(raw)
+                if response.status_code != 200:
+                    raise AIProviderError(f"API Error: {response.status_code} - {response.text}")
 
     # ---------------------------------------------------------
     # GITAUDITOR SEMANTIC FEATURES
     # ---------------------------------------------------------
 
-    async def analyze_commit_message(
-        self, commit_msg: str, diff_text: str
-    ) -> str | None:
+    async def analyze_commit_message(self, commit_msg: str, diff_text: str) -> str | None:
         prompt = (
             "You are an expert Git hook enforcing conventional commits.\n"
             f"Original Message: {commit_msg}\n\n"
@@ -152,7 +157,7 @@ class AIClient:
             summary="Gerou nova mensagem de commit com base no diff.",
             ai_provider=self.provider,
             ai_model=self.model,
-            details=json.dumps(res) if res else "RetryError or Invalid Response"
+            details=json.dumps(res) if res else "RetryError or Invalid Response",
         )
 
         return res.get("suggested_message") if res else None
@@ -166,9 +171,7 @@ class AIClient:
             "the tech stack list, suggested tags, and the risk/activity level.\n\n"
             f"CONTEXT:\n{context_str}\n"
         )
-        res = await self._generate_structured(
-            prompt, RepoSummarySchema.model_json_schema()
-        )
+        res = await self._generate_structured(prompt, RepoSummarySchema.model_json_schema())
 
         status = "SUCCESS" if res else "ERROR"
         AuditLogger.log(
@@ -212,9 +215,7 @@ class AIClient:
             "Do NOT focus on secrets.\n\n"
             f"DIFF:\n{diff_content}\n"
         )
-        res = await self._generate_structured(
-            prompt, RepoReviewSchema.model_json_schema()
-        )
+        res = await self._generate_structured(prompt, RepoReviewSchema.model_json_schema())
 
         status = "SUCCESS" if res else "ERROR"
         AuditLogger.log(
@@ -235,9 +236,7 @@ class AIClient:
             "Group the information into features, fixes, and breaking changes. Summarize the overall evolution.\n\n"
             f"COMMITS LOG:\n{commits_log}\n"
         )
-        res = await self._generate_structured(
-            prompt, RepoChangelogSchema.model_json_schema()
-        )
+        res = await self._generate_structured(prompt, RepoChangelogSchema.model_json_schema())
 
         status = "SUCCESS" if res else "ERROR"
         AuditLogger.log(

@@ -13,12 +13,8 @@ def config_command():
     config = ConfigManager.load_config()
     ai_config = config.get("ai", {})
 
-    console.print(
-        "\n[bold magenta]=== Configuração de IA do GitAuditor ===[/bold magenta]"
-    )
-    console.print(
-        "[dim]Escolha qual provedor de Inteligência Artificial você quer usar.[/dim]\n"
-    )
+    console.print("\n[bold magenta]=== Configuração de IA do GitAuditor ===[/bold magenta]")
+    console.print("[dim]Escolha qual provedor de Inteligência Artificial você quer usar.[/dim]\n")
 
     provider_choices = ["ollama", "openai", "openrouter", "azure"]
     current_provider = ai_config.get("provider", "ollama")
@@ -72,9 +68,7 @@ def config_command():
 
         current_key = ai_config.get("api_key", "")
         mask = "*" * 10 + current_key[-4:] if len(current_key) > 4 else ""
-        new_key = Prompt.ask(
-            f"Sua OpenRouter API Key [dim](Atual: {mask})[/dim]", password=True
-        )
+        new_key = Prompt.ask(f"Sua OpenRouter API Key [dim](Atual: {mask})[/dim]", password=True)
         if new_key:
             ai_config["api_key"] = new_key
 
@@ -84,11 +78,13 @@ def config_command():
         current_model = ai_config.get("model", "gpt-4o")
         ai_config["model"] = Prompt.ask("Qual deployment name (modelo)?", default=current_model)
 
-        current_url = ai_config.get("base_url", "https://<your-resource>.services.ai.azure.com/openai/v1")
+        current_url = ai_config.get(
+            "base_url", "https://<your-resource>.services.ai.azure.com/openai/v1"
+        )
         ai_config["base_url"] = Prompt.ask("URL base do Azure AI", default=current_url)
 
         use_default_cred = Prompt.ask("Usar Entra ID (DefaultAzureCredential)? [S/n]", default="s")
-        if use_default_cred.lower() == 's':
+        if use_default_cred.lower() == "s":
             ai_config["api_key"] = "azure_default_credential"
         else:
             current_key = ai_config.get("api_key", "")
@@ -103,7 +99,7 @@ def config_command():
     lang_choice = Prompt.ask(
         "Selecione o Idioma / Select Language: [1] Português (pt_BR) [2] English (en_US)",
         choices=["1", "2"],
-        default="1" if current_lang == "pt_BR" else "2"
+        default="1" if current_lang == "pt_BR" else "2",
     )
     config["lang"] = "pt_BR" if lang_choice == "1" else "en_US"
 

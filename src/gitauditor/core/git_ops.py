@@ -12,6 +12,7 @@ class GitService:
     def _sanitize_hash(commit_hash: str) -> str:
         """Sanitiza strings de hash para evitar injection no GitPython (--flag ou shell)."""
         import re
+
         if not commit_hash or not isinstance(commit_hash, str):
             return "HEAD"
         # Permite alfanuméricos, ~, ^, mas proíbe espaços, ; e duplos hifens
@@ -28,14 +29,10 @@ class GitService:
 
             # Info básica
             current_branch = (
-                repo.active_branch.name
-                if not repo.head.is_detached
-                else "Detached HEAD"
+                repo.active_branch.name if not repo.head.is_detached else "Detached HEAD"
             )
             remote_url = (
-                repo.remotes.origin.url
-                if "origin" in repo.remotes
-                else "Sem remote 'origin'"
+                repo.remotes.origin.url if "origin" in repo.remotes else "Sem remote 'origin'"
             )
 
             # Status
@@ -63,12 +60,8 @@ class GitService:
                 "remote": remote_url,
                 "is_dirty": is_dirty,
                 "commits": commits,
-                "user_name": repo.config_reader().get_value(
-                    "user", "name", "Não configurado"
-                ),
-                "user_email": repo.config_reader().get_value(
-                    "user", "email", "Não configurado"
-                ),
+                "user_name": repo.config_reader().get_value("user", "name", "Não configurado"),
+                "user_email": repo.config_reader().get_value("user", "email", "Não configurado"),
             }
         except Exception as e:
             return {"error": str(e)}
@@ -220,11 +213,12 @@ with open(sys.argv[1], "w") as file:
 
         # GUARDRAIL: Create a backup branch for rollback before destructive rebase
         import datetime
+
         backup_branch_name = f"gitauditor-backup-{datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d%H%M%S')}-{commit_hash[:7]}"
         try:
             repo.create_head(backup_branch_name, "HEAD")
         except Exception:
-            pass # Ignore if it fails, just a safety measure
+            pass  # Ignore if it fails, just a safety measure
 
         try:
             # 1. Script para alterar a instrução do rebase ('pick' para 'reword') no commit alvo

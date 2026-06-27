@@ -50,9 +50,7 @@ def handle_ai_amend(cli):
 
             console.print("\n[bold yellow]Ações de Revisão e Paginação:[/bold yellow]")
             console.print("[1] 🎯 Revisar um único commit específico")
-            console.print(
-                "[2] 🔄 Revisão Sequencial em Lote (O Mais Recente -> O Mais Antigo)"
-            )
+            console.print("[2] 🔄 Revisão Sequencial em Lote (O Mais Recente -> O Mais Antigo)")
 
             valid_choices = ["0", "1", "2"]
             if end < len(commits):
@@ -96,9 +94,7 @@ def handle_ai_amend(cli):
                         f"[dim]Hash original: {target_commit['hash']}\nMensagem atual: {target_commit['message']}[/dim]\n"
                     )
 
-                    success = _process_single_amend(
-                        cli, repo_path, target_commit, is_batch=True
-                    )
+                    success = _process_single_amend(cli, repo_path, target_commit, is_batch=True)
                     if not success:
                         break
                 console.print(
@@ -119,9 +115,7 @@ def handle_ai_amend(cli):
                     try:
                         repo = git.Repo(repo_path)
                         repo.git.push("--force-with-lease")
-                        console.print(
-                            "[bold green]✅ Push executado com sucesso![/bold green]"
-                        )
+                        console.print("[bold green]✅ Push executado com sucesso![/bold green]")
                     except Exception as e:
                         console.print(f"[bold red]Erro ao fazer push:[/] {e}")
 
@@ -130,22 +124,16 @@ def handle_ai_amend(cli):
         console.print("[red]ID inválido![/red]")
 
 
-def _process_single_amend(
-    cli, repo_path: str, target_commit: dict, is_batch: bool = False
-) -> bool:
+def _process_single_amend(cli, repo_path: str, target_commit: dict, is_batch: bool = False) -> bool:
     """Processa um commit individualmente. Retorna False se o usuário cancelar o lote inteiro."""
     commit_hash = target_commit["hash"]
 
-    with console.status(
-        f"[bold green]Isolando diff do commit {commit_hash}..."
-    ) as status:
+    with console.status(f"[bold green]Isolando diff do commit {commit_hash}...") as status:
         diff = GitService.extract_diff_for_commit(repo_path, commit_hash)
         if not diff or diff.startswith("Não foi possível"):
             from rich.markup import escape
 
-            console.print(
-                f"[red]Falha ao isolar diff para o commit {commit_hash}.[/red]"
-            )
+            console.print(f"[red]Falha ao isolar diff para o commit {commit_hash}.[/red]")
             console.print(f"[yellow]{escape(diff[:1000]) if diff else ''}[/yellow]")
             return True  # Retorna True para não cancelar o lote inteiro
 
@@ -165,9 +153,7 @@ def _process_single_amend(
         return True
 
     if is_batch:
-        prompt_text = (
-            "Deseja aplicar? [S]im / [N]Pular / [E]ditar manual / [C]ancelar Lote"
-        )
+        prompt_text = "Deseja aplicar? [S]im / [N]Pular / [E]ditar manual / [C]ancelar Lote"
         choices = ["S", "N", "E", "C", "s", "n", "e", "c"]
     else:
         prompt_text = "Deseja aplicar esta mensagem e reescrever o histórico? (S/N)"
@@ -177,21 +163,27 @@ def _process_single_amend(
 
     if confirm == "S":
         try:
-            with console.status(
-                "[bold yellow]Iniciando Rebase Interativo Automático..."
-            ):
+            with console.status("[bold yellow]Iniciando Rebase Interativo Automático..."):
                 backup_branch = GitService.reword_commit(repo_path, commit_hash, suggestion)
-            console.print(
-                "[bold green]✅ Commit atualizado com sucesso via rebase![/bold green]"
-            )
+            console.print("[bold green]✅ Commit atualizado com sucesso via rebase![/bold green]")
             console.print(f"[dim]Backup guardado na branch: {backup_branch}[/dim]")
 
-            if Prompt.ask("Deseja DESFAZER (Rollback) essa reescrita?", choices=["S", "N", "s", "n"], default="N").upper() == "S":
+            if (
+                Prompt.ask(
+                    "Deseja DESFAZER (Rollback) essa reescrita?",
+                    choices=["S", "N", "s", "n"],
+                    default="N",
+                ).upper()
+                == "S"
+            ):
                 GitService.rollback_amend(repo_path, backup_branch)
-                console.print("[yellow]Rollback executado com sucesso! Histórico restaurado.[/yellow]")
+                console.print(
+                    "[yellow]Rollback executado com sucesso! Histórico restaurado.[/yellow]"
+                )
             else:
                 # Se aceitou, podemos limpar a branch de backup para não sujar o repo
                 import git
+
                 try:
                     repo = git.Repo(repo_path)
                     repo.delete_head(backup_branch, force=True)
@@ -211,11 +203,21 @@ def _process_single_amend(
                 )
                 console.print(f"[dim]Backup guardado na branch: {backup_branch}[/dim]")
 
-                if Prompt.ask("Deseja DESFAZER (Rollback) essa reescrita?", choices=["S", "N", "s", "n"], default="N").upper() == "S":
+                if (
+                    Prompt.ask(
+                        "Deseja DESFAZER (Rollback) essa reescrita?",
+                        choices=["S", "N", "s", "n"],
+                        default="N",
+                    ).upper()
+                    == "S"
+                ):
                     GitService.rollback_amend(repo_path, backup_branch)
-                    console.print("[yellow]Rollback executado com sucesso! Histórico restaurado.[/yellow]")
+                    console.print(
+                        "[yellow]Rollback executado com sucesso! Histórico restaurado.[/yellow]"
+                    )
                 else:
                     import git
+
                     try:
                         repo = git.Repo(repo_path)
                         repo.delete_head(backup_branch, force=True)

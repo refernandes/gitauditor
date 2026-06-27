@@ -28,9 +28,7 @@ def get_git_diff(path: str, staged: bool) -> str:
 
 def review_command(
     path: str = typer.Option(".", help="Caminho do repositório"),
-    staged: bool = typer.Option(
-        False, "--staged", help="Analisar apenas mudanças em stage"
-    ),
+    staged: bool = typer.Option(False, "--staged", help="Analisar apenas mudanças em stage"),
 ):
     """
     [P3.3] Code Review Local: Analisa o diff atual buscando code smells e riscos.
@@ -50,14 +48,10 @@ def review_command(
     # Truncate if too large to save LLM context
     max_diff_length = 5000
     if len(diff_text) > max_diff_length:
-        console.print(
-            "[yellow]Diff muito grande. Truncando para os primeiros 5KB...[/yellow]"
-        )
+        console.print("[yellow]Diff muito grande. Truncando para os primeiros 5KB...[/yellow]")
         diff_text = diff_text[:max_diff_length] + "\n...[TRUNCATED]"
 
-    console.print(
-        "[cyan]Chamando IA para review (isso pode levar alguns segundos)...[/cyan]"
-    )
+    console.print("[cyan]Chamando IA para review (isso pode levar alguns segundos)...[/cyan]")
 
     from gitauditor.core.ai_api import AIClient
 
@@ -80,9 +74,7 @@ def review_command(
             for s in smells:
                 console.print(f"  - {s}")
         else:
-            console.print(
-                "\n[bold green]✅ Nenhum code smell evidente detectado![/bold green]"
-            )
+            console.print("\n[bold green]✅ Nenhum code smell evidente detectado![/bold green]")
 
         if risks:
             console.print("\n[bold red]🚨 Riscos Arquiteturais/Lógicos:[/bold red]")

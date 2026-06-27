@@ -35,9 +35,7 @@ def sync_catalog():
     )
     repos_paths = asyncio.run(scanner.scan(roots))
 
-    console.print(
-        "[cyan]Enriquecendo metadados (identificando remotes e owners)...[/cyan]"
-    )
+    console.print("[cyan]Enriquecendo metadados (identificando remotes e owners)...[/cyan]")
     enriched_data = asyncio.run(enrich_all(repos_paths))
 
     with Session(engine) as session:
@@ -67,9 +65,7 @@ def list_catalog():
     init_db()
     with Session(engine) as session:
         repos = session.exec(select(Repo)).all()
-        console.print(
-            f"Total: [bold green]{len(repos)}[/bold green] repositórios no catálogo."
-        )
+        console.print(f"Total: [bold green]{len(repos)}[/bold green] repositórios no catálogo.")
         for r in repos:
             console.print(f"- [cyan]{r.name}[/cyan] ({r.path})")
 
@@ -81,9 +77,7 @@ def health_dashboard():
     with Session(engine) as session:
         repos = session.exec(select(Repo)).all()
         if not repos:
-            console.print(
-                "[yellow]O catálogo está vazio. Rode `gitauditor catalog sync`.[/yellow]"
-            )
+            console.print("[yellow]O catálogo está vazio. Rode `gitauditor catalog sync`.[/yellow]")
             return
 
         orphans = [r for r in repos if r.status == "Orphan"]
@@ -109,9 +103,7 @@ def health_dashboard():
 
 @catalog_app.command("dedupe")
 def dedupe_repos(
-    plan: bool = typer.Option(
-        False, "--plan", help="Mostra apenas o plano de deduplicação"
-    ),
+    plan: bool = typer.Option(False, "--plan", help="Mostra apenas o plano de deduplicação"),
 ):
     """Identifica e propõe a normalização de repositórios duplicados lógicos."""
     init_db()
@@ -125,9 +117,7 @@ def dedupe_repos(
         duplicados = {c: reps for c, reps in canonical_map.items() if len(reps) > 1}
 
         if not duplicados:
-            console.print(
-                "[green]✅ Nenhum repositório duplicado logicamente encontrado![/green]"
-            )
+            console.print("[green]✅ Nenhum repositório duplicado logicamente encontrado![/green]")
             return
 
         console.print(
@@ -139,9 +129,7 @@ def dedupe_repos(
                 console.print(f"  - {r.path} [dim]({r.remote_url})[/dim]")
 
         if plan:
-            console.print(
-                "\n[dim]Modo --plan ativado. Nenhuma deleção será feita.[/dim]"
-            )
+            console.print("\n[dim]Modo --plan ativado. Nenhuma deleção será feita.[/dim]")
             return
 
         import shutil
@@ -153,7 +141,11 @@ def dedupe_repos(
             for i, r in enumerate(reps):
                 console.print(f"[{i}] Manter: {r.path}")
 
-            choice = typer.prompt("Digite o número do repositório a MANTER (os outros serão excluídos). Digite -1 para pular", type=int, default=-1)
+            choice = typer.prompt(
+                "Digite o número do repositório a MANTER (os outros serão excluídos). Digite -1 para pular",
+                type=int,
+                default=-1,
+            )
             if 0 <= choice < len(reps):
                 to_keep = reps[choice]
                 to_delete = [r for idx, r in enumerate(reps) if idx != choice]
@@ -162,16 +154,27 @@ def dedupe_repos(
                 safe_to_delete = []
                 for d in to_delete:
                     import subprocess
-                    res = subprocess.run(["git", "status", "--porcelain"], cwd=d.path, capture_output=True, text=True, timeout=15)
+
+                    res = subprocess.run(
+                        ["git", "status", "--porcelain"],
+                        cwd=d.path,
+                        capture_output=True,
+                        text=True,
+                        timeout=15,
+                    )
                     if res.stdout.strip() != "":
-                        console.print(f"[red]⚠️ Bloqueio de Segurança:[/red] {d.path} tem mudanças não commitadas! Abortando exclusão deste diretório.")
+                        console.print(
+                            f"[red]⚠️ Bloqueio de Segurança:[/red] {d.path} tem mudanças não commitadas! Abortando exclusão deste diretório."
+                        )
                     else:
                         safe_to_delete.append(d)
 
                 if not safe_to_delete:
                     continue
 
-                console.print("[yellow]Atenção: Os seguintes diretórios serão APAGADOS do disco:[/yellow]")
+                console.print(
+                    "[yellow]Atenção: Os seguintes diretórios serão APAGADOS do disco:[/yellow]"
+                )
                 for d in safe_to_delete:
                     console.print(f"- {d.path}")
 
@@ -201,17 +204,13 @@ def open_repo(query: str):
         ]
 
         if not matches:
-            console.print(
-                f"[red]❌ Nenhum repositório encontrado para '{query}'.[/red]"
-            )
+            console.print(f"[red]❌ Nenhum repositório encontrado para '{query}'.[/red]")
             return
 
         if len(matches) == 1:
             target = matches[0].path
         else:
-            console.print(
-                f"[yellow]Foram encontrados {len(matches)} resultados:[/yellow]"
-            )
+            console.print(f"[yellow]Foram encontrados {len(matches)} resultados:[/yellow]")
             for i, r in enumerate(matches):
                 console.print(f"[{i}] {r.canonical_name or r.name} ({r.path})")
 
@@ -292,9 +291,7 @@ def summarize_catalog(
                     repo.ai_summary = result.get("summary")
                     repo.ai_stack = result.get("stack")
                     repo.ai_tags = (
-                        result.get("tags", [])
-                        if isinstance(result.get("tags"), list)
-                        else []
+                        result.get("tags", []) if isinstance(result.get("tags"), list) else []
                     )
                     repo.ai_risk = result.get("risk")
 
@@ -312,9 +309,7 @@ def summarize_catalog(
                     console.print(f"  [dim]Tags: {repo.ai_tags}[/dim]")
                     console.print(f"  [dim]Resumo: {repo.ai_summary}[/dim]")
                 else:
-                    console.print(
-                        "[red]✗ Falha ao processar a resposta estruturada do LLM.[/red]"
-                    )
+                    console.print("[red]✗ Falha ao processar a resposta estruturada do LLM.[/red]")
 
         asyncio.run(analyze_all())
 
@@ -322,9 +317,7 @@ def summarize_catalog(
 @catalog_app.command("tag-auto")
 def tag_auto_catalog(
     path: str = typer.Option(None, help="Filtrar por nome do repositório"),
-    no_ai: bool = typer.Option(
-        False, "--no-ai", help="Usar apenas heurística bruta (sem IA)"
-    ),
+    no_ai: bool = typer.Option(False, "--no-ai", help="Usar apenas heurística bruta (sem IA)"),
 ):
     """
     [P3.2] Híbrido: Gera e aplica tags automaticamente (Heurística determinística + LLM).

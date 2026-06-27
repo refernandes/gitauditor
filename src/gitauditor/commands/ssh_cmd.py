@@ -12,16 +12,12 @@ console = Console()
 
 def handle_manage_ssh(cli):
     console.print(
-        Panel.fit(
-            "[bold magenta]🔑 Gerenciador de Chaves e Identidades SSH[/bold magenta]"
-        )
+        Panel.fit("[bold magenta]🔑 Gerenciador de Chaves e Identidades SSH[/bold magenta]")
     )
 
     # Globals
     globals_cfg = IdentityManager.get_global_git_config()
-    console.print(
-        f"[b]Identidade Global Git:[/] {globals_cfg['name']} <{globals_cfg['email']}>\n"
-    )
+    console.print(f"[b]Identidade Global Git:[/] {globals_cfg['name']} <{globals_cfg['email']}>\n")
 
     keys = IdentityManager.list_ssh_keys()
     if not keys:
@@ -47,9 +43,7 @@ def handle_manage_ssh(cli):
                 default="github.com",
             )
             with console.status(f"[bold blue]Testando conexão com {provider}..."):
-                success = asyncio.run(
-                    IdentityManager.test_provider_connection(provider)
-                )
+                success = asyncio.run(IdentityManager.test_provider_connection(provider))
                 if success:
                     console.print(
                         f"[bold green]✅ Autenticação bem-sucedida no {provider}![/bold green]"
