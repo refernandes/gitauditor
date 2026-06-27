@@ -1,9 +1,11 @@
 import json
+
 import httpx
-from typing import Optional
+from rich import print
 from tenacity import retry, stop_after_attempt, wait_exponential
-from gitauditor.core.config import ConfigManager
+
 from gitauditor.core.audit_log import AuditLogger
+from gitauditor.core.config import ConfigManager
 
 
 class AIClient:
@@ -23,17 +25,19 @@ class AIClient:
             self.base_url = self.ai_config.get(
                 "base_url", "https://openrouter.ai/api/v1"
             )
+        elif self.provider == "azure":
+            self.base_url = self.ai_config.get("base_url", "https://renansousa-2956-resource.services.ai.azure.com/openai/v1")
         else:
             self.base_url = self.ai_config.get("base_url", "")
 
     @retry(
-        stop=stop_after_attempt(3), 
+        stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
-        retry_error_callback=lambda _: None
+        retry_error_callback=lambda s: print(f"\n[bold red]Erro do LLM:[/bold red] {s.outcome.exception()}") or None
     )
     async def _generate_structured(
         self, prompt: str, schema_dict: dict, timeout: float = 120.0
-    ) -> Optional[dict]:
+    ) -> dict | None:
         """
         Unified method to request structured JSON from different providers.
         Retries up to 3 times on failure.
@@ -59,11 +63,18 @@ class AIClient:
                         raise Exception(f"Ollama API Error: {response.status_code} - {response.text}")
 
                 else:
-                    # OpenAI / OpenRouter Chat Completions API
+                    # OpenAI / OpenRouter / Azure Chat Completions API
                     headers = {
-                        "Authorization": f"Bearer {self.api_key}",
                         "Content-Type": "application/json",
                     }
+
+                    if self.provider == "azure" and self.api_key == "azure_default_credential":
+                        from azure.identity import DefaultAzureCredential
+                        credential = DefaultAzureCredential()
+                        token = credential.get_token("https://ai.azure.com/.default").token
+                        headers["Authorization"] = f"Bearer {token}"
+                    else:
+                        headers["Authorization"] = f"Bearer {self.api_key}"
                     if self.provider == "openrouter":
                         headers["HTTP-Referer"] = "https://github.com/gitauditor"
                         headers["X-Title"] = "GitAuditor"
@@ -106,7 +117,7 @@ class AIClient:
 
     async def analyze_commit_message(
         self, commit_msg: str, diff_text: str
-    ) -> Optional[str]:
+    ) -> str | None:
         prompt = (
             "You are an expert Git hook enforcing conventional commits.\n"
             f"Original Message: {commit_msg}\n\n"
@@ -119,7 +130,7 @@ class AIClient:
             "properties": {"suggested_message": {"type": "string"}},
         }
         res = await self._generate_structured(prompt, schema, timeout=30.0)
-        
+
         status = "SUCCESS" if res else "ERROR"
         AuditLogger.log(
             command="ai_amend",
@@ -129,10 +140,10 @@ class AIClient:
             ai_model=self.model,
             details=json.dumps(res) if res else "RetryError or Invalid Response"
         )
-        
+
         return res.get("suggested_message") if res else None
 
-    async def analyze_repo_semantics(self, context_str: str) -> Optional[dict]:
+    async def analyze_repo_semantics(self, context_str: str) -> dict | None:
         from gitauditor.core.semantic import RepoSummarySchema
 
         prompt = (
@@ -144,7 +155,7 @@ class AIClient:
         res = await self._generate_structured(
             prompt, RepoSummarySchema.model_json_schema()
         )
-        
+
         status = "SUCCESS" if res else "ERROR"
         AuditLogger.log(
             command="ai_summarize",
@@ -157,7 +168,7 @@ class AIClient:
 
     async def refine_repo_tags(
         self, context_str: str, heuristic_tags: list[str]
-    ) -> Optional[list[str]]:
+    ) -> list[str] | None:
         from gitauditor.core.semantic import RepoTagSchema
 
         prompt = (
@@ -167,7 +178,7 @@ class AIClient:
             f"CONTEXT:\n{context_str}\n"
         )
         res = await self._generate_structured(prompt, RepoTagSchema.model_json_schema())
-        
+
         status = "SUCCESS" if res else "ERROR"
         AuditLogger.log(
             command="ai_tagging",
@@ -178,7 +189,7 @@ class AIClient:
         )
         return res.get("tags", heuristic_tags) if res else heuristic_tags
 
-    async def analyze_local_diff(self, diff_content: str) -> Optional[dict]:
+    async def analyze_local_diff(self, diff_content: str) -> dict | None:
         from gitauditor.core.semantic import RepoReviewSchema
 
         prompt = (
@@ -190,7 +201,7 @@ class AIClient:
         res = await self._generate_structured(
             prompt, RepoReviewSchema.model_json_schema()
         )
-        
+
         status = "SUCCESS" if res else "ERROR"
         AuditLogger.log(
             command="ai_review",
@@ -201,7 +212,7 @@ class AIClient:
         )
         return res
 
-    async def generate_changelog(self, commits_log: str) -> Optional[dict]:
+    async def generate_changelog(self, commits_log: str) -> dict | None:
         from gitauditor.core.semantic import RepoChangelogSchema
 
         prompt = (
@@ -213,7 +224,7 @@ class AIClient:
         res = await self._generate_structured(
             prompt, RepoChangelogSchema.model_json_schema()
         )
-        
+
         status = "SUCCESS" if res else "ERROR"
         AuditLogger.log(
             command="ai_changelog",

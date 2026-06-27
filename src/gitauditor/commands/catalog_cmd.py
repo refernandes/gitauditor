@@ -1,17 +1,18 @@
-import typer
+import asyncio
 import os
 import platform
-import asyncio
 import string
-from datetime import datetime
+from datetime import datetime, timezone
+
+import typer
 from rich.console import Console
+from rich.table import Table
 from sqlmodel import Session, select
 
 from gitauditor.core.catalog import engine, init_db
+from gitauditor.core.enricher import enrich_all
 from gitauditor.core.models import Repo
 from gitauditor.core.scanner import GitScanner
-from gitauditor.core.enricher import enrich_all
-from rich.table import Table
 
 console = Console()
 catalog_app = typer.Typer(help="Gerenciamento do Catálogo Local de Repositórios")
@@ -51,7 +52,7 @@ def sync_catalog():
             repo.owner = data["owner"]
             repo.canonical_name = data["canonical_name"]
             repo.status = data["status"]
-            repo.updated_at = datetime.utcnow()
+            repo.updated_at = datetime.now(timezone.utc)
 
         session.commit()
 
@@ -144,35 +145,36 @@ def dedupe_repos(
             return
 
         import shutil
+
         from rich.prompt import Confirm
-        
+
         for c, reps in duplicados.items():
             console.print(f"\n[bold magenta]Resolvendo duplicação para:[/bold magenta] {c}")
             for i, r in enumerate(reps):
                 console.print(f"[{i}] Manter: {r.path}")
-                
-            choice = typer.prompt(f"Digite o número do repositório a MANTER (os outros serão excluídos). Digite -1 para pular", type=int, default=-1)
+
+            choice = typer.prompt("Digite o número do repositório a MANTER (os outros serão excluídos). Digite -1 para pular", type=int, default=-1)
             if 0 <= choice < len(reps):
                 to_keep = reps[choice]
                 to_delete = [r for idx, r in enumerate(reps) if idx != choice]
-                
+
                 # GUARDRAIL: Lock / Dirty Check
                 safe_to_delete = []
                 for d in to_delete:
                     import subprocess
-                    res = subprocess.run(["git", "status", "--porcelain"], cwd=d.path, capture_output=True, text=True)
+                    res = subprocess.run(["git", "status", "--porcelain"], cwd=d.path, capture_output=True, text=True, timeout=15)
                     if res.stdout.strip() != "":
                         console.print(f"[red]⚠️ Bloqueio de Segurança:[/red] {d.path} tem mudanças não commitadas! Abortando exclusão deste diretório.")
                     else:
                         safe_to_delete.append(d)
-                
+
                 if not safe_to_delete:
                     continue
-                    
+
                 console.print("[yellow]Atenção: Os seguintes diretórios serão APAGADOS do disco:[/yellow]")
                 for d in safe_to_delete:
                     console.print(f"- {d.path}")
-                    
+
                 if Confirm.ask("Tem certeza absoluta? (Não há lixeira)"):
                     for d in safe_to_delete:
                         try:
@@ -241,12 +243,14 @@ def summarize_catalog(
     [P3] Analisa a árvore de pastas e manifestos para gerar metadados semânticos via IA.
     """
     import asyncio
+    from datetime import datetime
+
+    from sqlmodel import Session, select
+
+    from gitauditor.core.ai_api import AIClient
     from gitauditor.core.catalog import engine, init_db
     from gitauditor.core.models import Repo
-    from sqlmodel import Session, select
     from gitauditor.core.semantic import extract_repo_context
-    from gitauditor.core.ai_api import AIClient
-    from datetime import datetime
 
     init_db()
     client = AIClient()
@@ -279,7 +283,7 @@ def summarize_catalog(
                     console.print("[green]✓ Cache válido. Hash não mudou.[/green]")
                     continue
 
-                console.print(f"[dim]Construindo contexto e chamando Ollama...[/dim]")
+                console.print("[dim]Construindo contexto e chamando IA...[/dim]")
 
                 ctx_str = f"TREE:\n{context['tree']}\n\nMANIFESTS:\n{context['manifests']}\n\nREADME:\n{context['readme']}"
                 result = await client.analyze_repo_semantics(ctx_str)
@@ -297,7 +301,7 @@ def summarize_catalog(
                     # Governance
                     repo.ai_model = client.model
                     repo.ai_source_hash = current_hash
-                    repo.ai_updated_at = datetime.utcnow()
+                    repo.ai_updated_at = datetime.now(timezone.utc)
 
                     session.add(repo)
                     session.commit()
@@ -319,19 +323,21 @@ def summarize_catalog(
 def tag_auto_catalog(
     path: str = typer.Option(None, help="Filtrar por nome do repositório"),
     no_ai: bool = typer.Option(
-        False, "--no-ai", help="Usar apenas heurística bruta (sem Ollama)"
+        False, "--no-ai", help="Usar apenas heurística bruta (sem IA)"
     ),
 ):
     """
     [P3.2] Híbrido: Gera e aplica tags automaticamente (Heurística determinística + LLM).
     """
     import asyncio
-    from gitauditor.core.catalog import engine, init_db
-    from gitauditor.core.models import Repo
+
     from sqlmodel import Session, select
-    from gitauditor.core.heuristics import generate_heuristic_tags
-    from gitauditor.core.semantic import extract_repo_context
+
     from gitauditor.core.ai_api import AIClient
+    from gitauditor.core.catalog import engine, init_db
+    from gitauditor.core.heuristics import generate_heuristic_tags
+    from gitauditor.core.models import Repo
+    from gitauditor.core.semantic import extract_repo_context
 
     init_db()
     client = AIClient()

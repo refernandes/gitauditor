@@ -42,26 +42,72 @@ The content is organized as follows:
 </file_summary>
 
 <directory_structure>
+.github/
+  workflows/
+    ci.yml
 src/
-  commands/
-    __init__.py
-    amend_cmd.py
-    audit_cmd.py
-    repo_cmd.py
-    ssh_cmd.py
-  core/
-    git_ops.py
-    ollama_api.py
-    scanner.py
-    ssh_audit.py
-  __main__.py
-  cli.py
+  gitauditor/
+    commands/
+      __init__.py
+      amend_cmd.py
+      audit_cmd.py
+      catalog_cmd.py
+      changelog_cmd.py
+      config_cmd.py
+      policy_cmd.py
+      repo_app.py
+      repo_cmd.py
+      review_cmd.py
+      ssh_cmd.py
+      worktree_cmd.py
+    core/
+      ai_api.py
+      audit_log.py
+      catalog.py
+      config.py
+      enricher.py
+      git_ops.py
+      heuristics.py
+      models.py
+      policy_engine.py
+      scanner.py
+      semantic.py
+      ssh_audit.py
+    locales/
+      en_US/
+        LC_MESSAGES/
+          gitauditor.mo
+          gitauditor.po
+          messages.mo
+          messages.po
+      pt_BR/
+        LC_MESSAGES/
+          gitauditor.mo
+          gitauditor.po
+          messages.mo
+          messages.po
+      gitauditor.pot
+    __main__.py
+    cli.py
+  gitauditor.egg-info/
+    dependency_links.txt
+    entry_points.txt
+    PKG-INFO
+    requires.txt
+    SOURCES.txt
+    top_level.txt
 tests/
+  test_enricher.py
   test_point1_rebase_merges.py
   test_point2_async_audit.py
   test_point3_windows_rebase.py
   test_point5_duplicates.py
 .gitignore
+BLUEPRINT.md
+pyproject.toml
+README_pt.md
 README.md
 requirements.txt
+test_azure_key.py
+test_azure.py
 </directory_structure>

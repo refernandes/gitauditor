@@ -1,14 +1,13 @@
-import os
 import json
+import os
+
 import typer
-from typing import Optional
 from rich.console import Console
 from rich.table import Table
-from rich.panel import Panel
+from sqlmodel import Session, select
 
 from gitauditor.core.catalog import engine, init_db
 from gitauditor.core.models import Repo
-from sqlmodel import Session, select
 from gitauditor.core.policy_engine import PolicyEngine
 
 console = Console()
@@ -50,11 +49,11 @@ def find_repo_or_exit(query: str):
 
 @policy_app.command("check")
 def check_policy(
-    query: Optional[str] = typer.Argument(None, help="Nome do repositório a ser verificado"),
+    query: str | None = typer.Argument(None, help="Nome do repositório a ser verificado"),
     output_json: bool = typer.Option(False, "--json", help="Retorna o output como JSON estruturado")
 ):
     """Verifica a saúde de governança de um repositório (README, CI, Secrets, etc)."""
-    
+
     if query:
         paths_to_check = [find_repo_or_exit(query)]
     else:
@@ -81,8 +80,8 @@ def check_policy(
     # Audit logging for the command
     from gitauditor.core.audit_log import AuditLogger
     AuditLogger.log(
-        "policy_check", 
-        "SUCCESS", 
+        "policy_check",
+        "SUCCESS",
         f"Checou políticas para {len(paths_to_check)} repo(s).",
         details=json.dumps({"checked_count": len(paths_to_check)})
     )
@@ -97,12 +96,12 @@ def check_policy(
         if "error" in report:
             console.print(f"[red]Erro ao checar {os.path.basename(path)}: {report['error']}[/red]")
             continue
-            
+
         repo_name = os.path.basename(path)
         score = report["score"]
-        
+
         color = "green" if score >= 80 else "yellow" if score >= 50 else "red"
-        
+
         table = Table(title=f"Governance Report: {repo_name} (Score: [{color}]{score}/100[/{color}])", show_header=True)
         table.add_column("Critério", style="cyan")
         table.add_column("Status", justify="center")
@@ -115,29 +114,30 @@ def check_policy(
         table.add_row("Gitignore", _format_status(report["checks"]["gitignore"]))
         table.add_row("CI/CD Pipeline", _format_status(report["checks"]["ci_cd"]))
         table.add_row("Community (CODEOWNERS/etc)", _format_status(report["checks"]["codeowners"] and report["checks"]["contributing"] and report["checks"]["security"]))
-        
+
         env_status = "[red]❌ VAZADO[/red]" if report["checks"]["env_exposed"] else "[green]✅ Seguro[/green]"
         table.add_row("Segurança (.env commitado)", env_status)
 
         console.print(table)
-        
+
         if report["critical"]:
             for crit in report["critical"]:
                 console.print(f"[bold red]!! {crit} !![/bold red]")
-                
+
         if report["warnings"]:
             console.print("[yellow]Warnings:[/yellow]")
             for w in report["warnings"]:
                 console.print(f" - {w}")
-                
+
         console.print("") # spacing
 
 @policy_app.command("log")
 def policy_log(limit: int = 20):
     """Exibe o histórico de auditoria local (comandos executados e IA)."""
-    from gitauditor.core.audit_log import audit_engine, AuditRecord, init_audit_db
-    from sqlmodel import Session, select
     from rich.table import Table
+    from sqlmodel import Session, select
+
+    from gitauditor.core.audit_log import AuditRecord, audit_engine, init_audit_db
 
     init_audit_db()
     with Session(audit_engine) as session:

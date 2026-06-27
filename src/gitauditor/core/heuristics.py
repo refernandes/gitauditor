@@ -1,8 +1,7 @@
 import os
-from typing import List
 
 
-def generate_heuristic_tags(repo_path: str) -> List[str]:
+def generate_heuristic_tags(repo_path: str) -> list[str]:
     """
     P3.2: Deterministic auto-tagging based on path and file contents.
     Provides a solid baseline before LLM enrichment.
@@ -41,7 +40,7 @@ def generate_heuristic_tags(repo_path: str) -> List[str]:
     pkg_json = os.path.join(repo_path, "package.json")
     if os.path.exists(pkg_json):
         try:
-            with open(pkg_json, "r", encoding="utf-8") as f:
+            with open(pkg_json, encoding="utf-8") as f:
                 content = f.read().lower()
                 if (
                     "react" in content
@@ -66,10 +65,10 @@ def generate_heuristic_tags(repo_path: str) -> List[str]:
         try:
             content = ""
             if os.path.exists(req_txt):
-                with open(req_txt, "r", encoding="utf-8") as f:
+                with open(req_txt, encoding="utf-8") as f:
                     content += f.read().lower()
             if os.path.exists(py_toml):
-                with open(py_toml, "r", encoding="utf-8") as f:
+                with open(py_toml, encoding="utf-8") as f:
                     content += f.read().lower()
 
             if "fastapi" in content or "flask" in content or "django" in content:

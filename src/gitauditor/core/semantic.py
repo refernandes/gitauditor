@@ -1,7 +1,7 @@
-import os
 import hashlib
-from typing import Dict
+import os
 from pathlib import Path
+
 from pydantic import BaseModel, Field
 
 # ---------------------------------------------------------
@@ -107,7 +107,7 @@ class RepoChangelogSchema(BaseModel):
 # ---------------------------------------------------------
 
 
-def extract_repo_context(repo_path: str) -> Dict[str, str]:
+def extract_repo_context(repo_path: str) -> dict[str, str]:
     """
     Extracts deterministic heuristics and hierarchical content from a repository.
     Returns a dict with 'tree', 'readme', 'manifests', and the 'source_hash'.
@@ -141,7 +141,7 @@ def extract_repo_context(repo_path: str) -> Dict[str, str]:
             # Extract Manifests (Only in root or depth 1)
             if level <= 1 and f in MANIFEST_FILES:
                 try:
-                    with open(os.path.join(root, f), "r", encoding="utf-8") as f_obj:
+                    with open(os.path.join(root, f), encoding="utf-8") as f_obj:
                         manifests_content[f] = f_obj.read()[
                             :2048
                         ]  # Truncate to 2KB to save tokens
@@ -151,7 +151,7 @@ def extract_repo_context(repo_path: str) -> Dict[str, str]:
             # Extract README
             if level == 0 and f.lower().startswith("readme"):
                 try:
-                    with open(os.path.join(root, f), "r", encoding="utf-8") as f_obj:
+                    with open(os.path.join(root, f), encoding="utf-8") as f_obj:
                         readme_content = f_obj.read()[:3072]  # Truncate to 3KB
                 except Exception:
                     pass

@@ -1,14 +1,13 @@
-import os
 import glob
+import os
 import subprocess
-from typing import List, Dict
 
 
 class IdentityManager:
     """Gerencia e audita identidades Git e chaves SSH."""
 
     @staticmethod
-    def get_global_git_config() -> Dict[str, str]:
+    def get_global_git_config() -> dict[str, str]:
         """Obtém as configurações globais de usuário do Git."""
         configs = {"name": "Não configurado", "email": "Não configurado"}
         try:
@@ -16,6 +15,7 @@ class IdentityManager:
                 ["git", "config", "--global", "user.name"],
                 capture_output=True,
                 text=True,
+                timeout=15,
             )
             if name_result.returncode == 0 and name_result.stdout.strip():
                 configs["name"] = name_result.stdout.strip()
@@ -24,6 +24,7 @@ class IdentityManager:
                 ["git", "config", "--global", "user.email"],
                 capture_output=True,
                 text=True,
+                timeout=15,
             )
             if email_result.returncode == 0 and email_result.stdout.strip():
                 configs["email"] = email_result.stdout.strip()
@@ -32,7 +33,7 @@ class IdentityManager:
         return configs
 
     @staticmethod
-    def list_ssh_keys() -> List[Dict[str, str]]:
+    def list_ssh_keys() -> list[dict[str, str]]:
         """Lista as chaves SSH na pasta ~/.ssh do usuário."""
         ssh_dir = os.path.expanduser("~/.ssh")
         keys = []
@@ -70,11 +71,11 @@ class IdentityManager:
         try:
             if name:
                 subprocess.run(
-                    ["git", "config", "user.name", name], cwd=repo_path, check=True
+                    ["git", "config", "user.name", name], cwd=repo_path, check=True, timeout=15
                 )
             if email:
                 subprocess.run(
-                    ["git", "config", "user.email", email], cwd=repo_path, check=True
+                    ["git", "config", "user.email", email], cwd=repo_path, check=True, timeout=15
                 )
             if ssh_key_path:
                 # Usa core.sshCommand para forçar o Git a usar uma chave SSH específica
@@ -83,6 +84,7 @@ class IdentityManager:
                     ["git", "config", "core.sshCommand", ssh_command],
                     cwd=repo_path,
                     check=True,
+                    timeout=15,
                 )
             return True
         except subprocess.CalledProcessError:

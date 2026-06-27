@@ -1,10 +1,11 @@
-import os
 import asyncio
+import os
+
+import git
 import typer
 from rich.console import Console
-from rich.panel import Panel
 from rich.markdown import Markdown
-import git
+from rich.panel import Panel
 
 console = Console()
 
@@ -67,7 +68,7 @@ def changelog_command(
         commits_log = commits_log[:max_log_length] + "\n...[TRUNCATED]"
 
     console.print(
-        "[cyan]Chamando Ollama para gerar Changelog (isso pode levar alguns segundos)...[/cyan]"
+        "[cyan]Chamando IA para gerar Changelog (isso pode levar alguns segundos)...[/cyan]"
     )
 
     from gitauditor.core.ai_api import AIClient

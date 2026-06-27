@@ -1,9 +1,9 @@
-import os
 import asyncio
+import os
+
+import git
 import typer
 from rich.console import Console
-from rich.panel import Panel
-import git
 
 console = Console()
 
@@ -56,7 +56,7 @@ def review_command(
         diff_text = diff_text[:max_diff_length] + "\n...[TRUNCATED]"
 
     console.print(
-        "[cyan]Chamando Ollama para review (isso pode levar alguns segundos)...[/cyan]"
+        "[cyan]Chamando IA para review (isso pode levar alguns segundos)...[/cyan]"
     )
 
     from gitauditor.core.ai_api import AIClient

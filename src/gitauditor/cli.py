@@ -1,23 +1,24 @@
-import os
 import asyncio
-import typer
-from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
-from rich.prompt import Prompt
 
 # --- Inicialização da Internacionalização (i18n) ---
 import gettext
 import json
+import os
+
+import typer
+from rich.console import Console
+from rich.panel import Panel
+from rich.prompt import Prompt
+from rich.table import Table
 
 lang_to_use = "pt_BR"
 try:
     config_path = os.path.expanduser("~/.gitauditor.json")
     if os.path.exists(config_path):
-        with open(config_path, "r") as f:
+        with open(config_path) as f:
             cfg = json.load(f)
             lang_to_use = cfg.get("lang", "pt_BR")
-except:
+except Exception:
     pass
 
 localedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'locales')
@@ -30,15 +31,14 @@ except Exception:
     builtins.__dict__['_'] = lambda x: x
 # ----------------------------------------------------
 
-from gitauditor.core.scanner import GitScanner
-from gitauditor.core.ai_api import AIClient
-
-from gitauditor.commands.ssh_cmd import handle_manage_ssh
 from gitauditor.commands.catalog_cmd import catalog_app
-from gitauditor.commands.worktree_cmd import worktree_app
 from gitauditor.commands.config_cmd import config_command
 from gitauditor.commands.policy_cmd import policy_app
 from gitauditor.commands.repo_app import repo_app
+from gitauditor.commands.ssh_cmd import handle_manage_ssh
+from gitauditor.commands.worktree_cmd import worktree_app
+from gitauditor.core.ai_api import AIClient
+from gitauditor.core.scanner import GitScanner
 
 app = typer.Typer(
     help=_("GitAuditor - O seu assistente IA e motor de políticas para repositórios Git."),
@@ -88,7 +88,7 @@ class GitAuditorCLI:
                 f"[9] 🏷️  Filtrar Tabela (Atual: [bold green]{self.current_filter}[/bold green])"
             )
             console.print("[0] 🚪 Sair")
-            
+
             total_pages = (total_filtered + self.page_size - 1) // self.page_size if total_filtered > 0 else 1
             if total_pages > 1:
                 console.print(f"[dim]Página {self.current_page + 1}/{total_pages} - Digite 'n' para próxima, 'p' para anterior[/dim]")
@@ -112,6 +112,7 @@ class GitAuditorCLI:
                 else:
                     self.current_page = total_pages - 1
             elif choice == "1":
+                from gitauditor.commands.repo_cmd import handle_repo_details
                 handle_repo_details(self)
             elif choice == "2":
                 from gitauditor.commands.catalog_cmd import open_repo
@@ -126,6 +127,7 @@ class GitAuditorCLI:
                 Prompt.ask("\n[dim]Pressione ENTER para continuar[/dim]")
             elif choice == "4":
                 from rich.prompt import Confirm
+
                 from gitauditor.commands.catalog_cmd import dedupe_repos
 
                 plan = Confirm.ask("Rodar em modo seguro (Dry-Run)?", default=True)
@@ -136,8 +138,8 @@ class GitAuditorCLI:
                 console.print("[2] Criar Nova Worktree")
                 wc = Prompt.ask("Opção", choices=["1", "2"])
                 from gitauditor.commands.worktree_cmd import (
-                    list_worktrees,
                     create_worktree,
+                    list_worktrees,
                 )
 
                 q = Prompt.ask("Nome do repositório original")
@@ -184,7 +186,6 @@ class GitAuditorCLI:
 
                 handle_ai_amend(self)
             elif ai_choice == "2":
-                import asyncio
                 from gitauditor.commands.review_cmd import review_command
 
                 if not self.repos:
@@ -257,9 +258,10 @@ class GitAuditorCLI:
                 Prompt.ask("\n[dim]Pressione ENTER para continuar[/dim]")
 
     def _load_catalog(self, silent=False):
+        from sqlmodel import Session, select
+
         from gitauditor.core.catalog import engine, init_db
         from gitauditor.core.models import Repo
-        from sqlmodel import Session, select
 
         init_db()
         try:
@@ -383,7 +385,7 @@ class GitAuditorCLI:
         for idx, repo_path in enumerate(self.repos):
             status_obj = self.repo_status.get(repo_path, {"icon": "⚪", "reason": ""})
             icon = status_obj if isinstance(status_obj, str) else status_obj["icon"]
-            
+
             if self.current_filter == "Apenas OK" and "🟢" not in icon:
                 continue
             if self.current_filter == "Apenas Negados" and "🔴" not in icon:
@@ -393,7 +395,7 @@ class GitAuditorCLI:
             filtered_repos.append((idx, repo_path, status_obj))
 
         total_filtered = len(filtered_repos)
-        
+
         # Adjust page if out of bounds
         max_page = max(0, (total_filtered - 1) // self.page_size)
         if self.current_page > max_page:
@@ -421,7 +423,7 @@ class GitAuditorCLI:
             console.print(
                 f"[yellow]Nenhum repositório corresponde ao filtro: {self.current_filter}[/yellow]"
             )
-            
+
         return total_filtered
 
     def _action_filter_table(self):
@@ -444,8 +446,6 @@ class GitAuditorCLI:
             self.current_filter = "Apenas Locais"
         self.current_page = 0
 
-
-app = typer.Typer(help="GitAuditor CLI - IA Manager", invoke_without_command=True)
 
 # Registra os Sub-Apps Oficiais
 app.add_typer(catalog_app, name="catalog", help=_("Catálogo Local de Repositórios"))

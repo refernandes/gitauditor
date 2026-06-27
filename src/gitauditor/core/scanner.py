@@ -1,6 +1,5 @@
-import os
 import asyncio
-from typing import List
+import os
 
 # Reutilizando a lista de diretórios ignorados do seu script original
 IGNORED_DIRS = {
@@ -44,7 +43,7 @@ class GitScanner:
         self.callback = callback  # Função chamada a cada repo encontrado
         self.semaphore = asyncio.Semaphore(4)  # Limite de 4 raízes concorrentes
 
-    async def scan(self, root_dirs: List[str]) -> List[str]:
+    async def scan(self, root_dirs: list[str]) -> list[str]:
         """Inicia a varredura assíncrona nos diretórios raiz fornecidos."""
         self.is_scanning = True
         self.found_repos = []
