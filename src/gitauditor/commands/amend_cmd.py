@@ -1,9 +1,11 @@
-import git
 import asyncio
+
+import git
 from rich.console import Console
 from rich.panel import Panel
+from rich.prompt import IntPrompt, Prompt
 from rich.table import Table
-from rich.prompt import Prompt, IntPrompt
+
 from gitauditor.core.git_ops import GitService
 
 console = Console()
@@ -183,7 +185,7 @@ def _process_single_amend(
                 "[bold green]✅ Commit atualizado com sucesso via rebase![/bold green]"
             )
             console.print(f"[dim]Backup guardado na branch: {backup_branch}[/dim]")
-            
+
             if Prompt.ask("Deseja DESFAZER (Rollback) essa reescrita?", choices=["S", "N", "s", "n"], default="N").upper() == "S":
                 GitService.rollback_amend(repo_path, backup_branch)
                 console.print("[yellow]Rollback executado com sucesso! Histórico restaurado.[/yellow]")
@@ -208,7 +210,7 @@ def _process_single_amend(
                     "[bold green]✅ Commit atualizado com sucesso via rebase![/bold green]"
                 )
                 console.print(f"[dim]Backup guardado na branch: {backup_branch}[/dim]")
-                
+
                 if Prompt.ask("Deseja DESFAZER (Rollback) essa reescrita?", choices=["S", "N", "s", "n"], default="N").upper() == "S":
                     GitService.rollback_amend(repo_path, backup_branch)
                     console.print("[yellow]Rollback executado com sucesso! Histórico restaurado.[/yellow]")

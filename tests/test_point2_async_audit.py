@@ -1,9 +1,10 @@
-import pytest
 import asyncio
-import time
-import sys
 import os
+import sys
+import time
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from gitauditor.cli import GitAuditorCLI

@@ -1,17 +1,17 @@
 import typer
-import os
 from rich.console import Console
 
 console = Console()
 repo_app = typer.Typer(
-    help=_("Operações de Repositório (Revisão, Changelog, Histórico, etc)"),
-    epilog=_("""
+    help="Operações de Repositório (Revisão, Changelog, Histórico, etc)",
+    epilog="""
 Exemplos práticos:
   $ gitauditor repo review .                  # Analisa o diff no diretório atual
-  $ gitauditor repo changelog --limit 10      # Gera notas de release para 10 commits
-  $ gitauditor repo amend                     # Reescreve histórico interativamente
-  $ gitauditor repo details                   # Visualiza detalhes de um projeto
-""")
+  $ gitauditor repo changelog .               # Gera notas de release para os novos commits
+  $ gitauditor repo analyze .                 # Avalia tech-stack, dependências e padrões
+  $ gitauditor repo reword . a1b2c3d          # Reescreve a mensagem de um commit antigo interativamente
+  $ gitauditor repo history .                 # Exibe histórico visual de commits recentes
+"""
 )
 
 @repo_app.command("review")
@@ -29,8 +29,8 @@ def repo_changelog(path: str = typer.Option(".", help="Caminho do repositório")
 @repo_app.command("amend")
 def repo_amend():
     """Abre fluxo interativo para reescrever commits com IA."""
-    from gitauditor.commands.amend_cmd import handle_ai_amend
     from gitauditor.cli import cli_state
+    from gitauditor.commands.amend_cmd import handle_ai_amend
     cli_state._load_catalog()
     cli_state._show_repo_table()
     handle_ai_amend(cli_state)
@@ -38,8 +38,8 @@ def repo_amend():
 @repo_app.command("details")
 def repo_details():
     """Visualiza detalhes e gerencia um repositório interativamente."""
-    from gitauditor.commands.repo_cmd import handle_repo_details
     from gitauditor.cli import cli_state
+    from gitauditor.commands.repo_cmd import handle_repo_details
     cli_state._load_catalog()
     cli_state._show_repo_table()
     handle_repo_details(cli_state)

@@ -1,6 +1,6 @@
-import git
-from typing import List, Dict
 import os
+
+import git
 
 
 class GitService:
@@ -19,7 +19,7 @@ class GitService:
         return s
 
     @staticmethod
-    def get_repo_details(path: str) -> Dict:
+    def get_repo_details(path: str) -> dict:
         """Obtém detalhes de um repositório."""
         try:
             repo = git.Repo(path)
@@ -127,6 +127,7 @@ with open(sys.argv[1], "w") as file:
                 env=env,
                 check=True,
                 capture_output=True,
+                timeout=15,
             )
         except subprocess.CalledProcessError as e:
             raise Exception(f"Erro ao iniciar rebase: {e.stderr.decode()}")
@@ -152,7 +153,7 @@ with open(sys.argv[1], "w") as file:
         env["GIT_EDITOR"] = "true"
         try:
             subprocess.run(
-                ["git", "rebase", "--continue"], cwd=path, env=env, capture_output=True
+                ["git", "rebase", "--continue"], cwd=path, env=env, capture_output=True, timeout=15
             )
         except Exception:
             pass
@@ -172,7 +173,7 @@ with open(sys.argv[1], "w") as file:
         return info
 
     @staticmethod
-    def find_open_branches(path: str) -> List[str]:
+    def find_open_branches(path: str) -> list[str]:
         """Verifica branches locais existentes."""
         try:
             repo = git.Repo(path)
@@ -198,8 +199,8 @@ with open(sys.argv[1], "w") as file:
     def reword_commit(path: str, commit_hash: str, new_message: str) -> bool:
         """Muda a mensagem de um commit antigo (mesmo longe no histórico) usando rebase interativo."""
         commit_hash = GitService._sanitize_hash(commit_hash)
-        import tempfile
         import subprocess
+        import tempfile
 
         # Cria scripts Python temporários para atuar como editores não-interativos do Git
         seq_editor_fd, seq_editor_path = tempfile.mkstemp(text=True)
@@ -217,7 +218,7 @@ with open(sys.argv[1], "w") as file:
 
         # GUARDRAIL: Create a backup branch for rollback before destructive rebase
         import datetime
-        backup_branch_name = f"gitauditor-backup-{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}-{commit_hash[:7]}"
+        backup_branch_name = f"gitauditor-backup-{datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%d%H%M%S')}-{commit_hash[:7]}"
         try:
             repo.create_head(backup_branch_name, "HEAD")
         except Exception:
@@ -263,6 +264,7 @@ shutil.copy("{msg_text_path}", sys.argv[1])
                     env=env,
                     check=True,
                     capture_output=True,
+                    timeout=15,
                 )
             else:
                 subprocess.run(
@@ -278,11 +280,12 @@ shutil.copy("{msg_text_path}", sys.argv[1])
                     env=env,
                     check=True,
                     capture_output=True,
+                    timeout=15,
                 )
 
             return backup_branch_name
         except subprocess.CalledProcessError as e:
-            subprocess.run(["git", "rebase", "--abort"], cwd=path, capture_output=True)
+            subprocess.run(["git", "rebase", "--abort"], cwd=path, capture_output=True, timeout=15)
             raise Exception(f"Rebase failed: {e.stderr.decode()}")
         finally:
             if os.path.exists(seq_editor_path):

@@ -1,9 +1,11 @@
 import os
 import shutil
+
 from rich.console import Console
 from rich.panel import Panel
+from rich.prompt import IntPrompt, Prompt
 from rich.table import Table
-from rich.prompt import Prompt, IntPrompt
+
 from gitauditor.core.git_ops import GitService
 
 console = Console()

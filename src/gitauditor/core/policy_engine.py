@@ -1,11 +1,12 @@
 import os
-from typing import Dict, Any
+from typing import Any
+
 
 class PolicyEngine:
     @staticmethod
-    def check_repository(repo_path: str) -> Dict[str, Any]:
+    def check_repository(repo_path: str) -> dict[str, Any]:
         """Avalia a governança e saúde do repositório de forma passiva."""
-        
+
         report = {
             "score": 100,
             "checks": {},
@@ -64,10 +65,13 @@ class PolicyEngine:
         # 4. Critical Security Risks (.env check)
         # Verify if .env is tracked by git (not just existing on disk)
         import subprocess
-        res = subprocess.run(["git", "ls-files", ".env"], cwd=repo_path, capture_output=True, text=True)
-        is_env_tracked = res.stdout.strip() != ""
+        try:
+            res = subprocess.run(["git", "ls-files", ".env"], cwd=repo_path, capture_output=True, text=True, timeout=15)
+            is_env_tracked = res.stdout.strip() != ""
+        except Exception:
+            is_env_tracked = False
         report["checks"]["env_exposed"] = is_env_tracked
-        
+
         if is_env_tracked:
             report["score"] -= 50
             report["critical"].append("CRÍTICO: O arquivo '.env' está versionado no repositório! Risco de vazamento de credenciais.")

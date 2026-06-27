@@ -1,5 +1,6 @@
 import os
-from sqlmodel import create_engine, Session, SQLModel
+
+from sqlmodel import Session, SQLModel, create_engine
 
 # Importa para registrar no metadata do SQLModel
 
@@ -15,13 +16,14 @@ engine = create_engine(sqlite_url)
 
 def init_db():
     SQLModel.metadata.create_all(engine)
-    
+
     # Heurística simples de Migration:
     # Se uma nova versão adicionou colunas que não existem, o select vai falhar.
     # Como o banco é de cache efêmero, fazemos um Drop & Recreate para evitar crashs.
-    from sqlmodel import Session, select
-    from gitauditor.core.models import Repo
     from sqlalchemy.exc import OperationalError
+    from sqlmodel import Session, select
+
+    from gitauditor.core.models import Repo
 
     try:
         with Session(engine) as session:

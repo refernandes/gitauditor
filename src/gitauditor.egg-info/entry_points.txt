@@ -1,2 +1,0 @@
-[console_scripts]
-gitauditor = gitauditor.__main__:main

@@ -1,7 +1,8 @@
 import os
 import subprocess
-import pytest
 import sys
+
+import pytest
 
 # Garante que src está no path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))

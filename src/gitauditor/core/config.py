@@ -1,6 +1,5 @@
-import os
 import json
-from pathlib import Path
+import os
 
 CONFIG_DIR = os.path.expanduser("~/.gitauditor")
 CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
@@ -29,7 +28,7 @@ class ConfigManager:
             return config
 
         try:
-            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            with open(CONFIG_FILE, encoding="utf-8") as f:
                 return json.load(f)
         except Exception:
             return ConfigManager.get_default_config()
@@ -40,7 +39,7 @@ class ConfigManager:
             os.makedirs(CONFIG_DIR, mode=0o700, exist_ok=True)
         with open(CONFIG_FILE, "w", encoding="utf-8") as f:
             json.dump(config, f, indent=4)
-        
+
         # Security: ensure config.json is only readable/writable by the owner
         # since it stores sensitive API keys
         if hasattr(os, "chmod"):

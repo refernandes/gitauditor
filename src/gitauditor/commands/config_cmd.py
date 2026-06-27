@@ -1,6 +1,6 @@
-import typer
 from rich.console import Console
 from rich.prompt import Prompt
+
 from gitauditor.core.config import ConfigManager
 
 console = Console()
@@ -20,17 +20,18 @@ def config_command():
         "[dim]Escolha qual provedor de Inteligência Artificial você quer usar.[/dim]\n"
     )
 
-    provider_choices = ["ollama", "openai", "openrouter"]
+    provider_choices = ["ollama", "openai", "openrouter", "azure"]
     current_provider = ai_config.get("provider", "ollama")
 
     console.print("Provedores disponíveis:")
     console.print("  [1] Ollama (Local, Gratuito, Seguro)")
     console.print("  [2] OpenAI (Nuvem, Pago, Muito inteligente)")
     console.print("  [3] OpenRouter (Nuvem, Multi-modelos, Pago/Gratuito)")
+    console.print("  [4] Azure AI (Nuvem Corporativa Microsoft)")
 
     choice = Prompt.ask(
         "Selecione o provedor",
-        choices=["1", "2", "3"],
+        choices=["1", "2", "3", "4"],
         default=str(provider_choices.index(current_provider) + 1)
         if current_provider in provider_choices
         else "1",
@@ -78,6 +79,23 @@ def config_command():
             ai_config["api_key"] = new_key
 
         ai_config["base_url"] = "https://openrouter.ai/api/v1"
+
+    elif selected_provider == "azure":
+        current_model = ai_config.get("model", "gpt-4o")
+        ai_config["model"] = Prompt.ask("Qual deployment name (modelo)?", default=current_model)
+
+        current_url = ai_config.get("base_url", "https://renansousa-2956-resource.services.ai.azure.com/openai/v1")
+        ai_config["base_url"] = Prompt.ask("URL base do Azure AI", default=current_url)
+
+        use_default_cred = Prompt.ask("Usar Entra ID (DefaultAzureCredential)? [S/n]", default="s")
+        if use_default_cred.lower() == 's':
+            ai_config["api_key"] = "azure_default_credential"
+        else:
+            current_key = ai_config.get("api_key", "")
+            mask = "*" * 10 + current_key[-4:] if len(current_key) > 4 else ""
+            new_key = Prompt.ask(f"Sua API Key do Azure [dim](Atual: {mask})[/dim]", password=True)
+            if new_key:
+                ai_config["api_key"] = new_key
 
     # Language Selection
     console.print("\n[dim]Configuração de Idioma / Language Settings[/dim]")
