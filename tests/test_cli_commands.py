@@ -36,7 +36,7 @@ def test_catalog_sync_command(mock_session, mock_init_db):
 def test_policy_check_command(mock_find, mock_engine):
     """Testa se o comando policy check é chamado adequadamente."""
     mock_find.return_value = "/tmp/dummy/repo"
-    mock_engine.return_value.check_repository.return_value = {
+    mock_engine.check_repository.return_value = {
         "status": "ok",
         "score": 100,
         "critical": [],
