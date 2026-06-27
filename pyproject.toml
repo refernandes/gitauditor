@@ -47,15 +47,16 @@ dev = [
     "pytest-cov>=4.1.0",
     "pytest-asyncio>=0.23.5",
     "pytest-mock>=3.14.0",
-    "ruff>=0.3.0",
-    "mypy>=1.9.0",
+    "pip-audit>=2.7.3",
+    "mypy>=1.14.1",
+    "mkdocs-material>=9.5.0",
 ]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
 # NOTE: Temporarily set to 37% instead of 80% so CI doesn't break. 
 # Once we write tests for the remaining modules, we can bump this to 80.
-addopts = "-ra -q --cov=src --cov-report=term-missing --cov-fail-under=37"
+addopts = "-ra -q --cov=src --cov-report=term-missing --cov-fail-under=80"
 testpaths = [
     "tests",
 ]
