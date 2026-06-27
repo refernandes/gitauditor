@@ -3,6 +3,7 @@ import asyncio
 # --- Inicialização da Internacionalização (i18n) ---
 import gettext
 import json
+import locale
 import os
 
 import typer
@@ -10,8 +11,6 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.table import Table
-
-import locale
 
 try:
     system_lang = locale.getdefaultlocale()[0] or "en_US"
@@ -29,18 +28,21 @@ try:
             lang_to_use = cfg.get("lang", default_lang)
 except Exception as e:
     import sys
+
     print(f"Aviso: Erro ao carregar config i18n: {e}", file=sys.stderr)
 
-localedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'locales')
+localedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "locales")
 try:
-    translate = gettext.translation('gitauditor', localedir, languages=[lang_to_use], fallback=True)
+    translate = gettext.translation("gitauditor", localedir, languages=[lang_to_use], fallback=True)
     translate.install()
     _ = translate.gettext
 except Exception as e:
     import sys
+
     print(f"Aviso: Não foi possível carregar a tradução: {e}", file=sys.stderr)
     import builtins
-    builtins.__dict__['_'] = lambda x: x
+
+    builtins.__dict__["_"] = lambda x: x
 # ----------------------------------------------------
 
 from gitauditor.commands.catalog_cmd import catalog_app
@@ -55,7 +57,7 @@ from gitauditor.core.scanner import GitScanner
 app = typer.Typer(
     help=_("GitAuditor - O seu assistente IA e motor de políticas para repositórios Git."),
     invoke_without_command=True,
-    epilog="Dica: Use [bold]gitauditor ui[/bold] para o menu interativo clássico."
+    epilog="Dica: Use [bold]gitauditor ui[/bold] para o menu interativo clássico.",
 )
 
 console = Console()
@@ -101,14 +103,16 @@ class GitAuditorCLI:
             )
             console.print("[0] 🚪 Sair")
 
-            total_pages = (total_filtered + self.page_size - 1) // self.page_size if total_filtered > 0 else 1
+            total_pages = (
+                (total_filtered + self.page_size - 1) // self.page_size if total_filtered > 0 else 1
+            )
             if total_pages > 1:
-                console.print(f"[dim]Página {self.current_page + 1}/{total_pages} - Digite 'n' para próxima, 'p' para anterior[/dim]")
+                console.print(
+                    f"[dim]Página {self.current_page + 1}/{total_pages} - Digite 'n' para próxima, 'p' para anterior[/dim]"
+                )
 
             choices = [str(i) for i in range(10)] + ["n", "N", "p", "P"]
-            choice = Prompt.ask(
-                "Escolha uma opção", choices=choices
-            ).lower()
+            choice = Prompt.ask("Escolha uma opção", choices=choices).lower()
 
             if choice == "0":
                 console.print("[bold green]Até logo![/bold green] 👋")
@@ -125,6 +129,7 @@ class GitAuditorCLI:
                     self.current_page = total_pages - 1
             elif choice == "1":
                 from gitauditor.commands.repo_cmd import handle_repo_details
+
                 handle_repo_details(self)
             elif choice == "2":
                 from gitauditor.commands.catalog_cmd import open_repo
@@ -221,9 +226,7 @@ class GitAuditorCLI:
                 repo_idx = Prompt.ask("Digite o ID do repositório")
                 if repo_idx.isdigit() and 0 <= int(repo_idx) < len(self.repos):
                     repo_path = self.repos[int(repo_idx)]
-                    limit = Prompt.ask(
-                        "Quantos commits analisar? (0 para todos)", default="0"
-                    )
+                    limit = Prompt.ask("Quantos commits analisar? (0 para todos)", default="0")
                     changelog_command(path=repo_path, limit=int(limit))
                 else:
                     console.print("[red]ID inválido![/red]")
@@ -296,9 +299,7 @@ class GitAuditorCLI:
                     console.print(
                         "[yellow]Por favor, apague o banco antigo e ressincronize:[/yellow]"
                     )
-                    console.print(
-                        "rm ~/.gitauditor/catalog.db && gitauditor catalog sync\n"
-                    )
+                    console.print("rm ~/.gitauditor/catalog.db && gitauditor catalog sync\n")
                 raise typer.Exit(1)
             else:
                 raise
@@ -445,9 +446,7 @@ class GitAuditorCLI:
         console.print("[3] Apenas Negados 🔴")
         console.print("[4] Apenas Locais 📁")
 
-        choice = Prompt.ask(
-            "Escolha o filtro", choices=["1", "2", "3", "4"], default="1"
-        )
+        choice = Prompt.ask("Escolha o filtro", choices=["1", "2", "3", "4"], default="1")
         if choice == "1":
             self.current_filter = "Todos"
         elif choice == "2":
@@ -470,6 +469,7 @@ app.add_typer(worktree_app, name="wt", hidden=True)
 
 app.command(name="config", help=_("Configurações do GitAuditor"))(config_command)
 
+
 class AppState:
     def __init__(self):
         self._cli: GitAuditorCLI | None = None
@@ -480,12 +480,14 @@ class AppState:
             self._cli = GitAuditorCLI()
         return self._cli
 
+
 @app.callback(invoke_without_command=True)
 def main_callback(ctx: typer.Context):
     if ctx.obj is None:
         ctx.obj = AppState()
     if ctx.invoked_subcommand is None:
         ctx.obj.cli.run()
+
 
 @app.command()
 def ui(ctx: typer.Context):
@@ -494,45 +496,58 @@ def ui(ctx: typer.Context):
         ctx.obj = AppState()
     ctx.obj.cli.run()
 
+
 @app.command(name="sync", hidden=True)
 def sync_shortcut():
     """Alias para catalog sync"""
     from gitauditor.commands.catalog_cmd import sync_catalog
+
     sync_catalog()
+
 
 @app.command(name="health", hidden=True)
 def health_shortcut():
     """Alias para catalog health"""
     from gitauditor.commands.catalog_cmd import health_dashboard
+
     health_dashboard()
+
 
 @app.command(name="history", hidden=True)
 def history_shortcut(limit: int = 20):
     """Alias para policy log"""
     from gitauditor.commands.policy_cmd import policy_log
+
     policy_log(limit=limit)
+
 
 @app.command(name="amend", hidden=True)
 def amend_shortcut(ctx: typer.Context):
     """Alias para repo amend"""
     from gitauditor.commands.repo_app import repo_amend
+
     if ctx.obj is None:
         ctx.obj = AppState()
     repo_amend(ctx)
+
 
 @app.command(name="details", hidden=True)
 def details_shortcut(ctx: typer.Context):
     """Alias para repo details"""
     from gitauditor.commands.repo_app import repo_details
+
     if ctx.obj is None:
         ctx.obj = AppState()
     repo_details(ctx)
+
 
 @app.command(name="review", hidden=True)
 def review_shortcut(path: str = ".", staged: bool = False):
     """Alias para repo review"""
     from gitauditor.commands.review_cmd import review_command
+
     review_command(path=path, staged=staged)
+
 
 @app.command(name="ssh", help=_("Gerenciar Chaves e Identidades SSH."))
 def ssh_cmd(ctx: typer.Context):

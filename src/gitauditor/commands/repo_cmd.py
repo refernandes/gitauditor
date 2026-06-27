@@ -24,9 +24,7 @@ def handle_repo_details(cli):
             console.print(f"[bold red]Erro:[/] {details['error']}")
             return
 
-        status_obj = cli.repo_status.get(
-            repo_path, {"icon": "⚪", "reason": "Desconhecido"}
-        )
+        status_obj = cli.repo_status.get(repo_path, {"icon": "⚪", "reason": "Desconhecido"})
         if isinstance(status_obj, str):
             push_status = status_obj
             push_reason = ""
@@ -68,9 +66,7 @@ def handle_repo_details(cli):
                 commits_table.add_row(
                     c["hash"],
                     c["date"],
-                    c["message"][:50] + "..."
-                    if len(c["message"]) > 50
-                    else c["message"],
+                    c["message"][:50] + "..." if len(c["message"]) > 50 else c["message"],
                 )
 
             console.print(commits_table)
@@ -113,20 +109,14 @@ def handle_repo_details(cli):
                         try:
                             shutil.move(repo_path, final_dest)
                             cli.repos[repo_idx] = final_dest
-                            cli.repo_status[final_dest] = cli.repo_status.pop(
-                                repo_path, "⚪"
-                            )
+                            cli.repo_status[final_dest] = cli.repo_status.pop(repo_path, "⚪")
                             console.print(
                                 f"[bold green]✅ Repositório movido com sucesso para {final_dest}![/bold green]"
                             )
                         except Exception as e:
-                            console.print(
-                                f"[bold red]Erro ao mover repositório:[/] {e}"
-                            )
+                            console.print(f"[bold red]Erro ao mover repositório:[/] {e}")
                 else:
-                    console.print(
-                        "[red]Diretório de destino inválido ou inexistente![/red]"
-                    )
+                    console.print("[red]Diretório de destino inválido ou inexistente![/red]")
 
             elif sub_choice == "2":
                 confirm = Prompt.ask(

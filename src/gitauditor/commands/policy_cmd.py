@@ -26,16 +26,12 @@ def find_repo_or_exit(query: str):
         ]
 
         if not matches:
-            console.print(
-                f"[red]❌ Nenhum repositório encontrado para '{query}'.[/red]"
-            )
+            console.print(f"[red]❌ Nenhum repositório encontrado para '{query}'.[/red]")
             raise typer.Exit(1)
         if len(matches) == 1:
             return matches[0].path
 
-        console.print(
-            "[yellow]Múltiplos encontrados, selecione um para continuar:[/yellow]"
-        )
+        console.print("[yellow]Múltiplos encontrados, selecione um para continuar:[/yellow]")
         for i, r in enumerate(matches):
             console.print(f"[{i}] {r.canonical_name or r.name} ({r.path})")
 
@@ -50,7 +46,9 @@ def find_repo_or_exit(query: str):
 @policy_app.command("check")
 def check_policy(
     query: str | None = typer.Argument(None, help="Nome do repositório a ser verificado"),
-    output_json: bool = typer.Option(False, "--json", help="Retorna o output como JSON estruturado")
+    output_json: bool = typer.Option(
+        False, "--json", help="Retorna o output como JSON estruturado"
+    ),
 ):
     """Verifica a saúde de governança de um repositório (README, CI, Secrets, etc)."""
 
@@ -79,11 +77,12 @@ def check_policy(
 
     # Audit logging for the command
     from gitauditor.core.audit_log import AuditLogger
+
     AuditLogger.log(
         "policy_check",
         "SUCCESS",
         f"Checou políticas para {len(paths_to_check)} repo(s).",
-        details=json.dumps({"checked_count": len(paths_to_check)})
+        details=json.dumps({"checked_count": len(paths_to_check)}),
     )
 
     if output_json:
@@ -102,7 +101,10 @@ def check_policy(
 
         color = "green" if score >= 80 else "yellow" if score >= 50 else "red"
 
-        table = Table(title=f"Governance Report: {repo_name} (Score: [{color}]{score}/100[/{color}])", show_header=True)
+        table = Table(
+            title=f"Governance Report: {repo_name} (Score: [{color}]{score}/100[/{color}])",
+            show_header=True,
+        )
         table.add_column("Critério", style="cyan")
         table.add_column("Status", justify="center")
 
@@ -113,9 +115,20 @@ def check_policy(
         table.add_row("LICENSE", _format_status(report["checks"]["license"]))
         table.add_row("Gitignore", _format_status(report["checks"]["gitignore"]))
         table.add_row("CI/CD Pipeline", _format_status(report["checks"]["ci_cd"]))
-        table.add_row("Community (CODEOWNERS/etc)", _format_status(report["checks"]["codeowners"] and report["checks"]["contributing"] and report["checks"]["security"]))
+        table.add_row(
+            "Community (CODEOWNERS/etc)",
+            _format_status(
+                report["checks"]["codeowners"]
+                and report["checks"]["contributing"]
+                and report["checks"]["security"]
+            ),
+        )
 
-        env_status = "[red]❌ VAZADO[/red]" if report["checks"]["env_exposed"] else "[green]✅ Seguro[/green]"
+        env_status = (
+            "[red]❌ VAZADO[/red]"
+            if report["checks"]["env_exposed"]
+            else "[green]✅ Seguro[/green]"
+        )
         table.add_row("Segurança (.env commitado)", env_status)
 
         console.print(table)
@@ -129,7 +142,8 @@ def check_policy(
             for w in report["warnings"]:
                 console.print(f" - {w}")
 
-        console.print("") # spacing
+        console.print("")  # spacing
+
 
 @policy_app.command("log")
 def policy_log(limit: int = 20):
@@ -141,13 +155,19 @@ def policy_log(limit: int = 20):
 
     init_audit_db()
     with Session(audit_engine) as session:
-        records = session.exec(select(AuditRecord).order_by(AuditRecord.id.desc()).limit(limit)).all()
+        records = session.exec(
+            select(AuditRecord).order_by(AuditRecord.id.desc()).limit(limit)
+        ).all()
 
     if not records:
         console.print("[yellow]Nenhum registro de auditoria encontrado.[/yellow]")
         return
 
-    table = Table(title=f"Histórico de Auditoria (Últimos {limit})", show_header=True, header_style="bold magenta")
+    table = Table(
+        title=f"Histórico de Auditoria (Últimos {limit})",
+        show_header=True,
+        header_style="bold magenta",
+    )
     table.add_column("Data", style="dim", width=16)
     table.add_column("Comando", style="cyan")
     table.add_column("Status", justify="center")
@@ -156,7 +176,9 @@ def policy_log(limit: int = 20):
 
     for r in records:
         dt = r.timestamp.strftime("%Y-%m-%d %H:%M")
-        status_color = "green" if r.status == "SUCCESS" else "red" if r.status == "ERROR" else "yellow"
+        status_color = (
+            "green" if r.status == "SUCCESS" else "red" if r.status == "ERROR" else "yellow"
+        )
         st = f"[{status_color}]{r.status}[/{status_color}]"
         ai_info = f"{r.ai_provider}/{r.ai_model}" if r.ai_provider else "-"
         table.add_row(dt, r.command, st, r.summary, ai_info)

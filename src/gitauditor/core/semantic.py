@@ -44,12 +44,8 @@ class RepoSummarySchema(BaseModel):
     Schema for Pydantic Validation of the LLM Structured Output
     """
 
-    summary: str = Field(
-        description="Short human-readable summary of the repository's purpose."
-    )
-    stack: str = Field(
-        description="Comma separated list of main technologies detected."
-    )
+    summary: str = Field(description="Short human-readable summary of the repository's purpose.")
+    stack: str = Field(description="Comma separated list of main technologies detected.")
     tags: list[str] = Field(
         description="Suggested categories like: work, study, lab, api, infra, frontend."
     )
@@ -97,9 +93,7 @@ class RepoChangelogSchema(BaseModel):
     )
     features: list[str] = Field(description="List of new features added.")
     fixes: list[str] = Field(description="List of bugs or issues fixed.")
-    breaking_changes: list[str] = Field(
-        description="List of breaking changes or major refactors."
-    )
+    breaking_changes: list[str] = Field(description="List of breaking changes or major refactors.")
 
 
 # ---------------------------------------------------------
@@ -142,9 +136,7 @@ def extract_repo_context(repo_path: str) -> dict[str, str]:
             if level <= 1 and f in MANIFEST_FILES:
                 try:
                     with open(os.path.join(root, f), encoding="utf-8") as f_obj:
-                        manifests_content[f] = f_obj.read()[
-                            :2048
-                        ]  # Truncate to 2KB to save tokens
+                        manifests_content[f] = f_obj.read()[:2048]  # Truncate to 2KB to save tokens
                 except Exception:
                     pass
 
@@ -159,6 +151,7 @@ def extract_repo_context(repo_path: str) -> dict[str, str]:
     tree_str = "\n".join(tree_lines)
 
     import json
+
     # Generate Invalidation Hash
     hash_input = tree_str + readme_content + json.dumps(manifests_content, sort_keys=True)
     source_hash = hashlib.sha256(hash_input.encode("utf-8")).hexdigest()

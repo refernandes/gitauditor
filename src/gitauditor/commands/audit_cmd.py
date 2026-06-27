@@ -38,9 +38,7 @@ def handle_audit_duplicates(cli):
         console.print("[yellow]Nenhum repositório para auditar.[/yellow]")
         return
 
-    console.print(
-        Panel.fit("[bold magenta]🧹 Auditoria de Duplicados e Branches[/bold magenta]")
-    )
+    console.print(Panel.fit("[bold magenta]🧹 Auditoria de Duplicados e Branches[/bold magenta]"))
 
     url_map = defaultdict(list)
     for path in cli.repos:
@@ -63,9 +61,7 @@ def handle_audit_duplicates(cli):
         return
 
     for set_idx, (url, paths) in enumerate(duplicate_sets):
-        console.print(
-            f"\n[bold red]⚠️ Set [{set_idx}] - Duplicados para o remote:[/] {url}"
-        )
+        console.print(f"\n[bold red]⚠️ Set [{set_idx}] - Duplicados para o remote:[/] {url}")
 
         dup_table = Table(show_header=True, header_style="bold yellow")
         dup_table.add_column("Path ID", style="dim", width=7)
@@ -130,16 +126,12 @@ def handle_audit_duplicates(cli):
                             shutil.move(target_path, final_dest)
                             cli.repos.remove(target_path)
                             cli.repos.append(final_dest)
-                            cli.repo_status[final_dest] = cli.repo_status.pop(
-                                target_path, "⚪"
-                            )
+                            cli.repo_status[final_dest] = cli.repo_status.pop(target_path, "⚪")
                             console.print(
                                 "[bold green]✅ Repositório unificado e movido com sucesso![/bold green]"
                             )
                         except Exception as e:
-                            console.print(
-                                f"[bold red]Erro ao mover repositório:[/] {e}"
-                            )
+                            console.print(f"[bold red]Erro ao mover repositório:[/] {e}")
                 else:
                     console.print("[red]Diretório destino inválido![/red]")
         else:

@@ -4,6 +4,7 @@ Git repository discovery scanner.
 Provides asynchronous file system traversal to locate Git repositories
 while ignoring common dependency and build directories to optimize speed.
 """
+
 import asyncio
 import os
 
@@ -43,7 +44,7 @@ IGNORED_DIRS = {
 class GitScanner:
     """
     Asynchronous service for scanning and discovering local Git repositories.
-    
+
     Uses asyncio threads to traverse directories without blocking the event loop,
     and supports concurrency limits and progress callbacks.
     """
@@ -57,10 +58,10 @@ class GitScanner:
     async def scan(self, root_dirs: list[str]) -> list[str]:
         """
         Starts an asynchronous scan across multiple root directories.
-        
+
         Args:
             root_dirs: A list of absolute paths to start the scan from.
-            
+
         Returns:
             list[str]: A list of absolute paths to discovered Git repositories.
         """
@@ -92,9 +93,7 @@ class GitScanner:
         for root, dirs, files in os.walk(directory, topdown=True):
             # Filtra in-place para eficiência
             dirs[:] = [
-                d
-                for d in dirs
-                if d not in IGNORED_DIRS and (not d.startswith(".") or d == ".git")
+                d for d in dirs if d not in IGNORED_DIRS and (not d.startswith(".") or d == ".git")
             ]
 
             if ".git" in dirs:

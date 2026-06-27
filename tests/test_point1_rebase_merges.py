@@ -17,9 +17,7 @@ def sandbox_repo(tmp_path):
     # Inicializa repo e configura user
     subprocess.run(["git", "init"], cwd=repo_dir, check=True)
     subprocess.run(["git", "config", "user.name", "Test"], cwd=repo_dir, check=True)
-    subprocess.run(
-        ["git", "config", "user.email", "test@example.com"], cwd=repo_dir, check=True
-    )
+    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo_dir, check=True)
 
     # Cria estrutura com um merge
     # Commit A na main

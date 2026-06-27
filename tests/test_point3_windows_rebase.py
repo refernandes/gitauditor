@@ -16,9 +16,7 @@ def sandbox_repo_rebase(tmp_path):
 
     subprocess.run(["git", "init"], cwd=repo_dir, check=True)
     subprocess.run(["git", "config", "user.name", "Test"], cwd=repo_dir, check=True)
-    subprocess.run(
-        ["git", "config", "user.email", "test@example.com"], cwd=repo_dir, check=True
-    )
+    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo_dir, check=True)
 
     # Cria 3 commits
     for i in range(3):

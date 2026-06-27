@@ -12,9 +12,12 @@ AUDIT_DB_PATH = os.path.join(GITAUDITOR_DIR, "audit.db")
 sqlite_url = f"sqlite:///{AUDIT_DB_PATH}"
 audit_engine = create_engine(sqlite_url)
 
+
 class AuditRecord(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    timestamp: datetime.datetime = Field(default_factory=lambda: datetime.datetime.now(datetime.timezone.utc))
+    timestamp: datetime.datetime = Field(
+        default_factory=lambda: datetime.datetime.now(datetime.timezone.utc)
+    )
     command: str
     repo_path: str | None = None
     ai_provider: str | None = None
@@ -23,8 +26,10 @@ class AuditRecord(SQLModel, table=True):
     summary: str
     details: str | None = None  # Could be JSON diff, exception trace, or raw output
 
+
 def init_audit_db():
     SQLModel.metadata.create_all(audit_engine)
+
 
 class AuditLogger:
     @staticmethod
@@ -35,7 +40,7 @@ class AuditLogger:
         repo_path: str | None = None,
         ai_provider: str | None = None,
         ai_model: str | None = None,
-        details: str | None = None
+        details: str | None = None,
     ):
         """Grava uma ação no log de auditoria persistente."""
         try:
@@ -47,7 +52,7 @@ class AuditLogger:
                 repo_path=repo_path,
                 ai_provider=ai_provider,
                 ai_model=ai_model,
-                details=details
+                details=details,
             )
             with Session(audit_engine) as session:
                 session.add(record)
