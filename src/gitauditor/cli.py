@@ -513,16 +513,20 @@ def history_shortcut(limit: int = 20):
     policy_log(limit=limit)
 
 @app.command(name="amend", hidden=True)
-def amend_shortcut():
+def amend_shortcut(ctx: typer.Context):
     """Alias para repo amend"""
     from gitauditor.commands.repo_app import repo_amend
-    repo_amend()
+    if ctx.obj is None:
+        ctx.obj = AppState()
+    repo_amend(ctx)
 
 @app.command(name="details", hidden=True)
-def details_shortcut():
+def details_shortcut(ctx: typer.Context):
     """Alias para repo details"""
     from gitauditor.commands.repo_app import repo_details
-    repo_details()
+    if ctx.obj is None:
+        ctx.obj = AppState()
+    repo_details(ctx)
 
 @app.command(name="review", hidden=True)
 def review_shortcut(path: str = ".", staged: bool = False):
