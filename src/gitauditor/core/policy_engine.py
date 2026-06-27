@@ -1,11 +1,34 @@
+"""
+Policy engine module.
+
+Enforces basic hygiene, community, and security governance rules on 
+cataloged repositories. Calculates a health score based on standard
+open-source requirements and secret leakage detection.
+"""
 import os
 from typing import Any
 
 
 class PolicyEngine:
+    """
+    Evaluates repository structure and contents against defined policies.
+    """
     @staticmethod
     def check_repository(repo_path: str) -> dict[str, Any]:
-        """Avalia a governança e saúde do repositório de forma passiva."""
+        """
+        Passive check for repository governance and health.
+        
+        Evaluates the presence of standard community files (README, LICENSE, etc.),
+        CI/CD pipelines, and checks for critical security risks like committed .env files.
+        
+        Args:
+            repo_path (str): The absolute path to the local git repository.
+            
+        Returns:
+            dict[str, Any]: A report dictionary containing the final 'score', 
+                            a dictionary of individual boolean 'checks', 
+                            and lists for 'warnings' and 'critical' alerts.
+        """
 
         report = {
             "score": 100,

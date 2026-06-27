@@ -1,3 +1,10 @@
+"""
+AI Provider integration module.
+
+Provides a unified interface (AIClient) to communicate with different LLM
+providers (OpenAI, OpenRouter, Azure, Ollama) and enforces structured JSON
+outputs for semantic analysis tasks.
+"""
 import json
 
 import httpx
@@ -10,6 +17,12 @@ from gitauditor.core.exceptions import AIProviderError
 
 
 class AIClient:
+    """
+    Unified client for interacting with AI models across different providers.
+    
+    Handles configuration, retries, timeouts, and structured JSON parsing.
+    Supports local (Ollama) and cloud (OpenAI, OpenRouter, Azure) endpoints.
+    """
     def __init__(self):
         config = ConfigManager.load_config()
         self.ai_config = config.get("ai", {})
