@@ -6,6 +6,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
 from gitauditor.core.audit_log import AuditLogger
 from gitauditor.core.config import ConfigManager
+from gitauditor.core.exceptions import AIProviderError
 
 
 class AIClient:
@@ -59,8 +60,8 @@ class AIClient:
                         raw = raw.removeprefix("```json").removesuffix("```").strip()
                         raw = raw.removeprefix("```").strip()
                         return json.loads(raw)
-                    else:
-                        raise Exception(f"Ollama API Error: {response.status_code} - {response.text}")
+                    if response.status_code != 200:
+                        raise AIProviderError(f"Ollama API Error: {response.status_code} - {response.text}")
 
                 else:
                     # OpenAI / OpenRouter / Azure Chat Completions API
@@ -108,8 +109,8 @@ class AIClient:
                         raw = raw.removeprefix("```json").removesuffix("```").strip()
                         raw = raw.removeprefix("```").strip()
                         return json.loads(raw)
-                    else:
-                        raise Exception(f"API Error: {response.status_code} - {response.text}")
+                    if response.status_code != 200:
+                        raise AIProviderError(f"API Error: {response.status_code} - {response.text}")
 
     # ---------------------------------------------------------
     # GITAUDITOR SEMANTIC FEATURES

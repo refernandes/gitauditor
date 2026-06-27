@@ -2,6 +2,8 @@ import os
 
 import git
 
+from .exceptions import ScanError
+
 
 class GitService:
     """Serviço para interagir com repositórios Git usando GitPython."""
@@ -15,7 +17,7 @@ class GitService:
         # Permite alfanuméricos, ~, ^, mas proíbe espaços, ; e duplos hifens
         s = re.sub(r"[^a-zA-Z0-9~^\-]", "", commit_hash)
         if "--" in s:
-            raise ValueError("Invalid commit hash format")
+            raise ScanError("Invalid commit hash format")
         return s
 
     @staticmethod
@@ -130,7 +132,7 @@ with open(sys.argv[1], "w") as file:
                 timeout=15,
             )
         except subprocess.CalledProcessError as e:
-            raise Exception(f"Erro ao iniciar rebase: {e.stderr.decode()}")
+            raise ScanError(f"Erro ao iniciar rebase: {e.stderr.decode()}")
         finally:
             if os.path.exists(seq_editor_path):
                 os.remove(seq_editor_path)
@@ -304,4 +306,4 @@ shutil.copy("{msg_text_path}", sys.argv[1])
             repo.delete_head(backup_branch, force=True)
             return True
         except Exception as e:
-            raise Exception(f"Erro no rollback: {e}")
+            raise ScanError(f"Erro no rollback: {e}")
