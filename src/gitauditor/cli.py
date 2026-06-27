@@ -11,13 +11,22 @@ from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.table import Table
 
-lang_to_use = "pt_BR"
+import locale
+
+try:
+    system_lang = locale.getdefaultlocale()[0] or "en_US"
+except Exception:
+    system_lang = "en_US"
+
+default_lang = "pt_BR" if system_lang.startswith("pt") else "en_US"
+lang_to_use = default_lang
+
 try:
     config_path = os.path.expanduser("~/.gitauditor.json")
     if os.path.exists(config_path):
         with open(config_path) as f:
             cfg = json.load(f)
-            lang_to_use = cfg.get("lang", "pt_BR")
+            lang_to_use = cfg.get("lang", default_lang)
 except Exception as e:
     import sys
     print(f"Aviso: Erro ao carregar config i18n: {e}", file=sys.stderr)
