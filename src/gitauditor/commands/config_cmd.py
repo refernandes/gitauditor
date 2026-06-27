@@ -84,7 +84,7 @@ def config_command():
         current_model = ai_config.get("model", "gpt-4o")
         ai_config["model"] = Prompt.ask("Qual deployment name (modelo)?", default=current_model)
 
-        current_url = ai_config.get("base_url", "https://renansousa-2956-resource.services.ai.azure.com/openai/v1")
+        current_url = ai_config.get("base_url", "https://<your-resource>.services.ai.azure.com/openai/v1")
         ai_config["base_url"] = Prompt.ask("URL base do Azure AI", default=current_url)
 
         use_default_cred = Prompt.ask("Usar Entra ID (DefaultAzureCredential)? [S/n]", default="s")

@@ -77,6 +77,7 @@ Se você prefere scripts ou comandos diretos, todas as opções da UI também fu
 
 ### 1. Configurando sua Inteligência Artificial
 Você pode escolher qual motor cognitivo o GitAuditor vai usar (Ollama para rodar 100% offline, OpenAI ou OpenRouter para modelos avançados em nuvem).
+Se você escolher **Azure OpenAI**, é obrigatório configurar seu endpoint customizado (ex: `https://<your-resource>.services.ai.azure.com/openai/v1`) executando o comando abaixo.
 ```bash
 gitauditor config
 ```

@@ -79,6 +79,7 @@ If you prefer scripts or direct commands, all UI options also work via CLI subco
 
 ### 1. Configuring your Artificial Intelligence
 You can choose which cognitive engine GitAuditor will use (Ollama to run 100% offline, OpenAI or OpenRouter for advanced cloud models).
+If you choose **Azure OpenAI**, you must configure your custom resource endpoint (e.g., `https://<your-resource>.services.ai.azure.com/openai/v1`) using the command below.
 ```bash
 gitauditor config
 ```
