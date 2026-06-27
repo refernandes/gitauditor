@@ -27,19 +27,19 @@ def repo_changelog(path: str = typer.Option(".", help="Caminho do repositório")
     changelog_command(path=path, limit=limit)
 
 @repo_app.command("amend")
-def repo_amend():
+def repo_amend(ctx: typer.Context):
     """Abre fluxo interativo para reescrever commits com IA."""
-    from gitauditor.cli import cli_state
     from gitauditor.commands.amend_cmd import handle_ai_amend
+    cli_state = ctx.obj.cli
     cli_state._load_catalog()
     cli_state._show_repo_table()
     handle_ai_amend(cli_state)
 
 @repo_app.command("details")
-def repo_details():
+def repo_details(ctx: typer.Context):
     """Visualiza detalhes e gerencia um repositório interativamente."""
-    from gitauditor.cli import cli_state
     from gitauditor.commands.repo_cmd import handle_repo_details
+    cli_state = ctx.obj.cli
     cli_state._load_catalog()
     cli_state._show_repo_table()
     handle_repo_details(cli_state)

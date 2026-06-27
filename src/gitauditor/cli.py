@@ -470,23 +470,29 @@ app.add_typer(worktree_app, name="wt", hidden=True)
 
 app.command(name="config", help=_("Configurações do GitAuditor"))(config_command)
 
-_cli_state = None
+class AppState:
+    def __init__(self):
+        self._cli: GitAuditorCLI | None = None
 
-def get_cli_state() -> GitAuditorCLI:
-    global _cli_state
-    if _cli_state is None:
-        _cli_state = GitAuditorCLI()
-    return _cli_state
+    @property
+    def cli(self) -> GitAuditorCLI:
+        if self._cli is None:
+            self._cli = GitAuditorCLI()
+        return self._cli
 
 @app.callback(invoke_without_command=True)
 def main_callback(ctx: typer.Context):
+    if ctx.obj is None:
+        ctx.obj = AppState()
     if ctx.invoked_subcommand is None:
-        get_cli_state().run()
+        ctx.obj.cli.run()
 
 @app.command()
-def ui():
+def ui(ctx: typer.Context):
     """Modo Interativo (UI/Launcher Clássico)."""
-    get_cli_state().run()
+    if ctx.obj is None:
+        ctx.obj = AppState()
+    ctx.obj.cli.run()
 
 @app.command(name="sync", hidden=True)
 def sync_shortcut():
@@ -507,16 +513,20 @@ def history_shortcut(limit: int = 20):
     policy_log(limit=limit)
 
 @app.command(name="amend", hidden=True)
-def amend_shortcut():
+def amend_shortcut(ctx: typer.Context):
     """Alias para repo amend"""
     from gitauditor.commands.repo_app import repo_amend
-    repo_amend()
+    if ctx.obj is None:
+        ctx.obj = AppState()
+    repo_amend(ctx)
 
 @app.command(name="details", hidden=True)
-def details_shortcut():
+def details_shortcut(ctx: typer.Context):
     """Alias para repo details"""
     from gitauditor.commands.repo_app import repo_details
-    repo_details()
+    if ctx.obj is None:
+        ctx.obj = AppState()
+    repo_details(ctx)
 
 @app.command(name="review", hidden=True)
 def review_shortcut(path: str = ".", staged: bool = False):
@@ -525,8 +535,10 @@ def review_shortcut(path: str = ".", staged: bool = False):
     review_command(path=path, staged=staged)
 
 @app.command(name="ssh", help=_("Gerenciar Chaves e Identidades SSH."))
-def ssh_cmd():
-    handle_manage_ssh(get_cli_state())
+def ssh_cmd(ctx: typer.Context):
+    if ctx.obj is None:
+        ctx.obj = AppState()
+    handle_manage_ssh(ctx.obj.cli)
 
 
 if __name__ == "__main__":

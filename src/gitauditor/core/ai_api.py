@@ -1,3 +1,10 @@
+"""
+AI Provider integration module.
+
+Provides a unified interface (AIClient) to communicate with different LLM
+providers (OpenAI, OpenRouter, Azure, Ollama) and enforces structured JSON
+outputs for semantic analysis tasks.
+"""
 import json
 
 import httpx
@@ -6,9 +13,16 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
 from gitauditor.core.audit_log import AuditLogger
 from gitauditor.core.config import ConfigManager
+from gitauditor.core.exceptions import AIProviderError
 
 
 class AIClient:
+    """
+    Unified client for interacting with AI models across different providers.
+    
+    Handles configuration, retries, timeouts, and structured JSON parsing.
+    Supports local (Ollama) and cloud (OpenAI, OpenRouter, Azure) endpoints.
+    """
     def __init__(self):
         config = ConfigManager.load_config()
         self.ai_config = config.get("ai", {})
@@ -59,8 +73,8 @@ class AIClient:
                         raw = raw.removeprefix("```json").removesuffix("```").strip()
                         raw = raw.removeprefix("```").strip()
                         return json.loads(raw)
-                    else:
-                        raise Exception(f"Ollama API Error: {response.status_code} - {response.text}")
+                    if response.status_code != 200:
+                        raise AIProviderError(f"Ollama API Error: {response.status_code} - {response.text}")
 
                 else:
                     # OpenAI / OpenRouter / Azure Chat Completions API
@@ -108,8 +122,8 @@ class AIClient:
                         raw = raw.removeprefix("```json").removesuffix("```").strip()
                         raw = raw.removeprefix("```").strip()
                         return json.loads(raw)
-                    else:
-                        raise Exception(f"API Error: {response.status_code} - {response.text}")
+                    if response.status_code != 200:
+                        raise AIProviderError(f"API Error: {response.status_code} - {response.text}")
 
     # ---------------------------------------------------------
     # GITAUDITOR SEMANTIC FEATURES

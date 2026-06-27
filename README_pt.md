@@ -1,5 +1,7 @@
 # GitAuditor 🤖
 
+[![CI](https://github.com/refernandes/gitauditor/actions/workflows/ci.yml/badge.svg)](https://github.com/refernandes/gitauditor/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/refernandes/gitauditor/graph/badge.svg?token=YOUR_TOKEN_HERE)](https://codecov.io/gh/refernandes/gitauditor)
 **GitAuditor** evoluiu de um simples script local para um **Catálogo Inteligente de Infraestrutura de Código turbinado por Inteligência Artificial**.
 Construído em Python com `Typer`, `SQLModel` e `Rich`, ele transforma pastas de repositórios espalhadas pela sua máquina em um banco de dados local perfeitamente gerenciável, ao mesmo tempo que entende o contexto semântico do seu código usando provedores de IA como OpenAI, OpenRouter ou Ollama local.
 
