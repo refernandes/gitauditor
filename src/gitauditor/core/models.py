@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, SQLModel, Column, JSON
 
 
 class Repo(SQLModel, table=True):
@@ -14,7 +14,7 @@ class Repo(SQLModel, table=True):
     )  # Ex: github.com/refernandes/gitauditor
 
     # Metadados enriquecidos
-    tags: str | None = Field(default="")  # Separados por vírgula ou JSON string
+    tags: list[str] = Field(default=[], sa_column=Column(JSON))
     size_mb: float | None = Field(default=0.0)
 
     # Saúde do Repositório
@@ -25,7 +25,7 @@ class Repo(SQLModel, table=True):
 
     # P3: Semantic Fields
     ai_summary: str | None = Field(default=None)
-    ai_tags: str | None = Field(default=None)  # CSV format
+    ai_tags: list[str] = Field(default=[], sa_column=Column(JSON))
     ai_stack: str | None = Field(default=None)
     ai_risk: str | None = Field(default=None)
 

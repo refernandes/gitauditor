@@ -292,9 +292,9 @@ def summarize_catalog(
                     repo.ai_summary = result.get("summary")
                     repo.ai_stack = result.get("stack")
                     repo.ai_tags = (
-                        ",".join(result.get("tags", []))
+                        result.get("tags", [])
                         if isinstance(result.get("tags"), list)
-                        else result.get("tags", "")
+                        else []
                     )
                     repo.ai_risk = result.get("risk")
 
@@ -376,13 +376,12 @@ def tag_auto_catalog(
                             final_tags = refined
 
                 # Update DB
-                tag_str = ",".join(final_tags)
-                repo.tags = tag_str
+                repo.tags = final_tags
                 session.add(repo)
                 session.commit()
 
                 console.print(
-                    f"  [green]✓ Tags aplicadas:[/green] [bold cyan]{tag_str}[/bold cyan]"
+                    f"  [green]✓ Tags aplicadas:[/green] [bold cyan]{', '.join(final_tags)}[/bold cyan]"
                 )
 
         asyncio.run(tag_all())
