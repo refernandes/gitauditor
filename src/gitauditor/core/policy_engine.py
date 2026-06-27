@@ -65,6 +65,10 @@ class PolicyEngine:
         # 4. Critical Security Risks (.env check)
         # Verify if .env is tracked by git (not just existing on disk)
         import subprocess
+        
+        if not os.path.isdir(repo_path) or not os.path.exists(os.path.join(repo_path, ".git")):
+            return report
+
         try:
             res = subprocess.run(["git", "ls-files", ".env"], cwd=repo_path, capture_output=True, text=True, timeout=15)
             is_env_tracked = res.stdout.strip() != ""

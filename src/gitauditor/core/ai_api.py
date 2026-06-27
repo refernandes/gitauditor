@@ -26,7 +26,7 @@ class AIClient:
                 "base_url", "https://openrouter.ai/api/v1"
             )
         elif self.provider == "azure":
-            self.base_url = self.ai_config.get("base_url", "https://renansousa-2956-resource.services.ai.azure.com/openai/v1")
+            self.base_url = self.ai_config.get("base_url", "https://<your-resource>.services.ai.azure.com/openai/v1")
         else:
             self.base_url = self.ai_config.get("base_url", "")
 
