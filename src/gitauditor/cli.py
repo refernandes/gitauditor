@@ -18,15 +18,18 @@ try:
         with open(config_path) as f:
             cfg = json.load(f)
             lang_to_use = cfg.get("lang", "pt_BR")
-except Exception:
-    pass
+except Exception as e:
+    import sys
+    print(f"Aviso: Erro ao carregar config i18n: {e}", file=sys.stderr)
 
 localedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'locales')
 try:
     translate = gettext.translation('gitauditor', localedir, languages=[lang_to_use], fallback=True)
     translate.install()
     _ = translate.gettext
-except Exception:
+except Exception as e:
+    import sys
+    print(f"Aviso: Não foi possível carregar a tradução: {e}", file=sys.stderr)
     import builtins
     builtins.__dict__['_'] = lambda x: x
 # ----------------------------------------------------
@@ -457,17 +460,24 @@ app.add_typer(policy_app, name="policy", help=_("Motor de Políticas de Governan
 app.add_typer(worktree_app, name="wt", hidden=True)
 
 app.command(name="config", help=_("Configurações do GitAuditor"))(config_command)
-cli_state = GitAuditorCLI()
+
+_cli_state = None
+
+def get_cli_state() -> GitAuditorCLI:
+    global _cli_state
+    if _cli_state is None:
+        _cli_state = GitAuditorCLI()
+    return _cli_state
 
 @app.callback(invoke_without_command=True)
 def main_callback(ctx: typer.Context):
     if ctx.invoked_subcommand is None:
-        cli_state.run()
+        get_cli_state().run()
 
 @app.command()
 def ui():
     """Modo Interativo (UI/Launcher Clássico)."""
-    cli_state.run()
+    get_cli_state().run()
 
 @app.command(name="sync", hidden=True)
 def sync_shortcut():
@@ -507,7 +517,7 @@ def review_shortcut(path: str = ".", staged: bool = False):
 
 @app.command(name="ssh", help=_("Gerenciar Chaves e Identidades SSH."))
 def ssh_cmd():
-    handle_manage_ssh(cli_state)
+    handle_manage_ssh(get_cli_state())
 
 
 if __name__ == "__main__":
